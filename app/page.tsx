@@ -125,34 +125,34 @@ export default function ChatPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-black transition-all duration-500">
-      <div className="max-w-4xl mx-auto p-4 md:p-6 flex flex-col h-screen gap-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-950 via-slate-900 to-indigo-950 transition-all duration-500">
+      <div className="max-w-4xl mx-auto p-3 md:p-6 flex flex-col h-screen gap-3 md:gap-4">
         {/* Header */}
         <motion.header 
           initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="glass-effect rounded-2xl p-4 md:p-6 shadow-2xl bg-slate-900/80 border border-slate-700/50"
+          animate={{ y: 0, opacity: 1, rotateX: [5, 0] }}
+          transition={{ duration: 0.6, rotateX: { type: "spring", stiffness: 200 } }}
+          className="glass-effect rounded-2xl p-3 md:p-6 shadow-2xl bg-slate-900/60 backdrop-blur-xl border border-purple-500/20 shadow-purple-500/10"
         >
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="flex items-center gap-3">
               <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear", scale: { duration: 2, repeat: Infinity } }}
                 className="relative"
               >
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center shadow-lg shadow-purple-500/25">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
-                <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-r from-slate-500 to-slate-400 animate-pulse-slow" />
+                <div className="absolute -top-1 -right-1 w-3 h-3 md:w-4 md:h-4 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 animate-pulse-slow shadow-lg shadow-pink-500/50" />
               </motion.div>
               
               <div>
-                <h1 className="text-2xl md:text-3xl font-black tracking-tighter">
+                <h1 className="text-xl md:text-3xl font-black tracking-tighter">
                   <motion.span
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ duration: 4, repeat: Infinity }}
-                    className="gradient-text"
+                    animate={{ scale: [1, 1.05, 1], textShadow: ["0 0 0px #8b5cf6", "0 0 10px #8b5cf6", "0 0 0px #8b5cf6"] }}
+                    transition={{ duration: 4, textShadow: { duration: 2, repeat: Infinity } }}
+                    className="bg-gradient-to-r from-purple-400 via-pink-400 to-violet-400 bg-clip-text text-transparent"
                   >
                     LUMI
                   </motion.span>
@@ -164,7 +164,7 @@ export default function ChatPage() {
                     ✨
                   </motion.span>
                 </h1>
-                <p className="text-xs md:text-sm uppercase tracking-wider text-slate-400 mt-1">
+                <p className="text-xs md:text-sm uppercase tracking-wider text-purple-300 mt-1">
                   Intelligent AI Assistant
                 </p>
               </div>
@@ -175,7 +175,7 @@ export default function ChatPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleClearChat}
-                className="px-3 py-2 rounded-xl bg-slate-800 text-slate-300 text-sm font-medium flex items-center gap-2 transition-all hover:shadow-md hover:bg-slate-700 border border-slate-600"
+                className="px-2 md:px-3 py-1 md:py-2 rounded-xl bg-gradient-to-r from-slate-800 to-slate-900 text-purple-300 text-xs md:text-sm font-medium flex items-center gap-1 md:gap-2 transition-all hover:shadow-md hover:bg-gradient-to-r hover:from-purple-900 hover:to-violet-900 border border-purple-500/30 hover:border-purple-400/50"
               >
                 <Trash2 size={16} />
                 Clear Chat
@@ -185,7 +185,7 @@ export default function ChatPage() {
                 whileHover={{ scale: 1.1, rotate: 180 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center transition-all shadow-lg border border-slate-600"
+                className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center transition-all shadow-lg border border-purple-500/30 shadow-purple-500/10"
               >
                 {theme === 'dark' ? 
                   <Sun className="w-5 h-5 text-yellow-500" /> : 
@@ -211,7 +211,7 @@ export default function ChatPage() {
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleQuickPrompt(prompt.text)}
-                className="p-3 rounded-xl bg-slate-800 border border-slate-600 text-sm text-slate-300 flex items-center gap-2 transition-all hover:shadow-md hover:bg-slate-700"
+                className="p-2 md:p-3 rounded-xl bg-gradient-to-br from-slate-800/80 to-slate-900/80 border border-purple-500/20 text-sm text-purple-200 flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-purple-500/20 hover:bg-gradient-to-br hover:from-purple-900/60 hover:to-violet-900/60 hover:border-purple-400/40"
               >
                 {prompt.icon}
                 <span className="truncate">{prompt.text}</span>
@@ -225,7 +225,7 @@ export default function ChatPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="flex-1 overflow-y-auto scrollbar-custom rounded-2xl p-4 md:p-6 bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 shadow-inner"
+          className="flex-1 overflow-y-auto scrollbar-custom rounded-2xl p-3 md:p-6 bg-gradient-to-br from-slate-900/40 to-slate-950/40 backdrop-blur-xl border border-purple-500/10 shadow-inner shadow-purple-500/5"
         >
           <AnimatePresence mode="popLayout">
             <div className="space-y-4 md:space-y-6">
@@ -238,10 +238,11 @@ export default function ChatPage() {
                   exit={{ opacity: 0, x: message.role === 'user' ? 100 : -100 }}
                   transition={{ 
                     type: "spring",
-                    stiffness: 500,
-                    damping: 30,
+                    stiffness: 400,
+                    damping: 25,
                     mass: 1,
-                    delay: index * 0.1
+                    delay: index * 0.15,
+                    scale: { type: "spring", stiffness: 500, damping: 30 }
                   }}
                   className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'} gap-3`}
                 >
@@ -250,7 +251,7 @@ export default function ChatPage() {
                     <motion.div 
                       whileHover={{ rotate: 360 }}
                       transition={{ duration: 0.5 }}
-                      className="hidden sm:flex flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 items-center justify-center shadow-lg"
+                      className="hidden sm:flex flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 items-center justify-center shadow-lg shadow-purple-500/25"
                     >
                       <Bot className="w-5 h-5 text-white" />
                     </motion.div>
@@ -259,10 +260,10 @@ export default function ChatPage() {
                   {/* Message Bubble */}
                   <motion.div
                     whileHover={{ scale: 1.01 }}
-                    className={`max-w-[85%] md:max-w-[75%] rounded-2xl p-4 md:p-5 shadow-lg relative overflow-hidden ${
+                    className={`max-w-[90%] md:max-w-[75%] rounded-2xl p-3 md:p-5 shadow-lg relative overflow-hidden ${
                       message.role === 'user' 
-                        ? 'bg-gradient-to-br from-slate-600 to-slate-500 text-white rounded-br-none' 
-                        : 'bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-700 dark:to-slate-800 dark:text-gray-100 border border-slate-600/50 dark:border-slate-600/50 rounded-bl-none'
+                        ? 'bg-gradient-to-br from-purple-600 to-violet-700 text-white rounded-br-none shadow-lg shadow-purple-500/25' 
+                        : 'bg-gradient-to-br from-slate-800 to-slate-900 text-purple-100 border border-purple-500/20 rounded-bl-none shadow-lg shadow-purple-500/10'
                     }`}
                   >
                     {/* Decorative elements */}
@@ -276,36 +277,36 @@ export default function ChatPage() {
                           rotate: { duration: 20, repeat: Infinity, ease: "linear" },
                           scale: { duration: 3, repeat: Infinity }
                         }}
-                        className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-r from-slate-500 to-slate-400 opacity-20"
+                        className="absolute -top-4 -right-4 w-8 h-8 rounded-full bg-gradient-to-r from-pink-400 to-purple-500 opacity-30 shadow-lg shadow-pink-500/30"
                       />
                     )}
 
                     {/* Message content */}
                     <div className="relative z-10">
-                      <div className={`prose prose-invert max-w-none text-sm md:text-base leading-relaxed ${message.role === 'assistant' ? 'font-serif text-slate-100' : 'font-sans text-slate-100'}`}>
+                      <div className={`prose prose-invert max-w-none text-sm md:text-base leading-relaxed ${message.role === 'assistant' ? 'font-serif text-purple-50' : 'font-sans text-purple-50'}`}>
                         <ReactMarkdown>{message.content}</ReactMarkdown>
                       </div>
                       
                       {/* Timestamp and actions */}
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-600/30">
-                        <span className="text-xs text-slate-500">
+                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-purple-500/20">
+                        <span className="text-xs text-purple-400">
                           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
                           onClick={() => handleCopyMessage(message.content)}
-                          className="p-1 rounded-md hover:bg-slate-700 transition-colors"
+                          className="p-1 rounded-md hover:bg-purple-900/50 transition-colors"
                           title="Copy message"
                         >
-                          <Copy size={14} className="text-slate-500" />
+                          <Copy size={14} className="text-purple-400" />
                         </motion.button>
                       </div>
                     </div>
 
                     {/* Message indicator */}
                     <div className={`absolute bottom-2 right-3 text-xs opacity-60 ${
-                      message.role === 'user' ? 'text-slate-300' : 'text-slate-400'
+                      message.role === 'user' ? 'text-purple-200' : 'text-purple-300'
                     }`}>
                       {message.role === 'user' ? <User size={10} /> : <Bot size={10} />}
                     </div>
@@ -315,7 +316,7 @@ export default function ChatPage() {
                   {message.role === 'user' && (
                     <motion.div 
                       whileHover={{ scale: 1.1 }}
-                      className="hidden sm:flex flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-slate-600 items-center justify-center shadow-lg"
+                      className="hidden sm:flex flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 items-center justify-center shadow-lg shadow-violet-500/25"
                     >
                       <User className="w-5 h-5 text-white" />
                     </motion.div>
@@ -330,11 +331,11 @@ export default function ChatPage() {
                   animate={{ opacity: 1, y: 0 }}
                   className="flex justify-start gap-3"
                 >
-                    <div className="hidden sm:flex flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-slate-600 to-slate-700 items-center justify-center shadow-lg">
+                    <div className="hidden sm:flex flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 items-center justify-center shadow-lg shadow-purple-500/25">
                     <Bot className="w-5 h-5 text-white" />
                   </div>
-                  <div className="rounded-2xl rounded-bl-none p-4 md:p-5 bg-gradient-to-br from-slate-700 to-slate-800 dark:from-slate-700 dark:to-slate-800 dark:text-gray-100 border border-slate-600/50 dark:border-slate-600/50 shadow-lg">
-                    <div className="flex items-center gap-2 text-slate-400">
+                  <div className="rounded-2xl rounded-bl-none p-3 md:p-5 bg-gradient-to-br from-slate-800 to-slate-900 text-purple-100 border border-purple-500/20 shadow-lg shadow-purple-500/10">
+                    <div className="flex items-center gap-2 text-purple-300">
                       <div className="typing-indicator">
                         <div className="typing-dot"></div>
                         <div className="typing-dot"></div>
@@ -357,7 +358,7 @@ export default function ChatPage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, type: "spring" }}
           onSubmit={sendMessage}
-          className="glass-effect rounded-2xl p-4 shadow-2xl border border-slate-700/50 bg-slate-900/80"
+          className="glass-effect rounded-2xl p-3 md:p-4 shadow-2xl border border-purple-500/20 bg-slate-900/60 backdrop-blur-xl shadow-purple-500/10"
         >
           <div className="flex gap-3">
             <motion.div 
@@ -366,7 +367,7 @@ export default function ChatPage() {
             >
               <textarea
                 ref={inputRef as any}
-                className="w-full outline-none bg-transparent px-4 py-3 md:py-4 text-slate-100 placeholder-slate-400 text-sm md:text-base rounded-xl border border-slate-600/50 focus:border-slate-400 focus:ring-2 focus:ring-slate-400/20 transition-all resize-none"
+                className="w-full outline-none bg-transparent px-3 md:px-4 py-2 md:py-4 text-purple-50 placeholder-purple-400 text-sm md:text-base rounded-xl border border-purple-500/30 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all resize-none"
                 value={input}
                 placeholder="Ask Lumi anything about your studies..."
                 onChange={(e) => setInput(e.target.value)}
@@ -378,7 +379,7 @@ export default function ChatPage() {
                 }}
                 disabled={isLoading}
                 rows={1}
-                style={{ minHeight: '48px', maxHeight: '120px' }}
+                style={{ minHeight: '40px', maxHeight: '120px' }}
               />
               
               {/* Character count */}
@@ -386,7 +387,7 @@ export default function ChatPage() {
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="absolute -bottom-6 left-0 text-xs text-slate-400"
+                  className="absolute -bottom-6 left-0 text-xs text-purple-400"
                 >
                   {input.length}/2000
                 </motion.div>
@@ -398,7 +399,7 @@ export default function ChatPage() {
               disabled={isLoading || !input.trim()}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="px-5 md:px-6 rounded-xl bg-gradient-to-r from-slate-600 to-slate-500 hover:from-slate-500 hover:to-slate-400 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center gap-2"
+              className="px-4 md:px-6 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center gap-2 shadow-purple-500/25"
             >
               {isLoading ? (
                 <motion.div
@@ -423,8 +424,8 @@ export default function ChatPage() {
             transition={{ delay: 0.5 }}
             className="mt-4 text-center"
           >
-            <p className="text-xs text-slate-500">
-              💡 Pro tip: Press <kbd className="px-2 py-1 bg-slate-800 rounded text-xs">Enter</kbd> to send, <kbd className="px-2 py-1 bg-slate-800 rounded text-xs">Shift</kbd> + <kbd className="px-2 py-1 bg-slate-800 rounded text-xs">Enter</kbd> for new line
+            <p className="text-xs text-purple-400">
+              💡 Pro tip: Press <kbd className="px-1 md:px-2 py-1 bg-purple-900/60 rounded text-xs">Enter</kbd> to send, <kbd className="px-1 md:px-2 py-1 bg-purple-900/60 rounded text-xs">Shift</kbd> + <kbd className="px-1 md:px-2 py-1 bg-purple-900/60 rounded text-xs">Enter</kbd> for new line
             </p>
           </motion.div>
         </motion.form>
@@ -434,7 +435,7 @@ export default function ChatPage() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6 }}
-          className="text-center text-xs text-slate-500 pb-4"
+          className="text-center text-xs text-purple-400 pb-3 md:pb-4"
         >
           <p>
             Lumi AI • Powered by Gemini • {new Date().getFullYear()} • 
