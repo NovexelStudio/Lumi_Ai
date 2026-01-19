@@ -101,6 +101,7 @@ export default function ChatPage() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -111,13 +112,19 @@ export default function ChatPage() {
 
   useEffect(() => { scrollToBottom(); }, [messages, streamingContent, scrollToBottom]);
 
+  // Ensure component only renders on client
   useEffect(() => {
-    if (!authLoading && !user) router.push('/auth');
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted || authLoading) return;
+    if (!user) router.push('/auth');
     if (user) {
       initializeUser(user.uid);
       getUserChats(user.uid).then(setChats);
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, mounted]);
 
   useEffect(() => {
     if (user && currentChatId) {
@@ -160,7 +167,7 @@ export default function ChatPage() {
     }
   };
 
-  if (authLoading || !user) return null;
+  if (!mounted || authLoading || !user) return null;
 
   return (
     <div className="relative h-screen flex overflow-hidden bg-[#020202] text-slate-200">

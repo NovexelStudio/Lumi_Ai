@@ -15,8 +15,15 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     if (!auth) {
       console.warn('Firebase auth not initialized');
       setLoading(false);
@@ -34,7 +41,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Auth initialization error:', error);
       setLoading(false);
     }
-  }, []);
+  }, [mounted]);
 
   const logout = async () => {
     if (!auth) {
