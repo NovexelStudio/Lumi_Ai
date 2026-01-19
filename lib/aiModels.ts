@@ -5,6 +5,8 @@ export const AI_MODELS = [
     description: 'Fast and powerful',
     icon: '✨',
     color: 'from-purple-500 to-pink-500',
+    speed: 850,
+    beta: false,
   },
   {
     id: 'groq',
@@ -12,6 +14,8 @@ export const AI_MODELS = [
     description: 'Lightning fast',
     icon: '⚡',
     color: 'from-orange-500 to-red-500',
+    speed: 250,
+    beta: false,
   },
   {
     id: 'claude',
@@ -19,8 +23,9 @@ export const AI_MODELS = [
     description: 'Creative & thoughtful',
     icon: '🧠',
     color: 'from-blue-500 to-cyan-500',
+    speed: 750,
+    beta: false,
   },
- 
 ];
 
 export function getModelColor(modelId: string) {

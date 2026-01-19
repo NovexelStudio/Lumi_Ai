@@ -24,137 +24,158 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No messages provided" }, { status: 400 });
     }
 
-    if (model === 'openrouter') {
-      // Use OpenRouter
-      if (!openRouterApiKey) {
-        return NextResponse.json({ error: "OpenRouter API Key is missing" }, { status: 500 });
-      }
+    // Try the requested model first, then fallback to alternatives on quota exceeded
+    const modelPriority = model === 'gemini' 
+      ? ['gemini', 'groq', 'openrouter']
+      : [model, 'groq', 'gemini', 'openrouter'];
 
-      const claudeMessages = messages.map((m: any) => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.content,
-      }));
+    let lastError: any = null;
 
+    for (const currentModel of modelPriority) {
       try {
-        const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openRouterApiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': 'http://localhost:3000',
-            'X-Title': 'Lumi Chat',
-          },
-          body: JSON.stringify({
-            model: 'openai/gpt-3.5-turbo',
-            messages: claudeMessages,
-            temperature: 0.7,
-            max_tokens: 2048,
-          }),
-        });
+        if (currentModel === 'openrouter') {
+          // Use OpenRouter
+          if (!openRouterApiKey) {
+            lastError = new Error("OpenRouter API Key is missing");
+            continue;
+          }
 
-        const data = await response.json();
+          const claudeMessages = messages.map((m: any) => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content,
+          }));
 
-        if (!response.ok) {
-          console.error('OpenRouter response error:', data);
-          throw new Error(data.error?.message || data.error || `OpenRouter Error: ${response.statusText}`);
+          const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${openRouterApiKey}`,
+              'Content-Type': 'application/json',
+              'HTTP-Referer': 'http://localhost:3000',
+              'X-Title': 'Lumi Chat',
+            },
+            body: JSON.stringify({
+              model: 'openai/gpt-3.5-turbo',
+              messages: claudeMessages,
+              temperature: 0.7,
+              max_tokens: 2048,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            lastError = new Error(data.error?.message || data.error || `OpenRouter Error: ${response.statusText}`);
+            if (response.status === 429) continue; // Try next model
+            throw lastError;
+          }
+
+          if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            lastError = new Error('Invalid response format from OpenRouter');
+            continue;
+          }
+
+          const text = data.choices[0].message.content;
+          return NextResponse.json({ content: text, model: 'openrouter' });
+
+        } else if (currentModel === 'groq') {
+          // Use Groq
+          if (!groqApiKey) {
+            lastError = new Error("Groq API Key is missing");
+            continue;
+          }
+
+          const groqMessages = messages.map((m: any) => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content,
+          }));
+
+          const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${groqApiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'llama-3.3-70b-versatile',
+              messages: groqMessages,
+              temperature: 0.7,
+              max_tokens: 2048,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            lastError = new Error(data.error?.message || data.error || `Groq Error: ${response.statusText}`);
+            if (response.status === 429) continue; // Try next model
+            throw lastError;
+          }
+
+          if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+            lastError = new Error('Invalid response format from Groq');
+            continue;
+          }
+
+          const text = data.choices[0].message.content;
+          return NextResponse.json({ content: text, model: 'groq' });
+
+        } else {
+          // Use Gemini (default)
+          if (!googleApiKey) {
+            lastError = new Error("Google API Key is missing from .env.local");
+            continue;
+          }
+
+          const genModel = genAI.getGenerativeModel({ 
+            model: "gemini-2.5-flash", 
+            systemInstruction: systemPrompt 
+          });
+
+          // --- Strict History Formatting ---
+          // Gemini requires: 1. Starts with User, 2. Alternates User/Model
+          const validRoles = messages.filter((m: any) => 
+            (m.role === 'user' || m.role === 'assistant') && m.content && m.content.trim() !== ""
+          );
+
+          const firstUserIndex = validRoles.findIndex((m: any) => m.role === 'user');
+          
+          // If we haven't started a conversation yet, we'll handle that
+          const cleanHistory = firstUserIndex !== -1 ? validRoles.slice(firstUserIndex) : [];
+
+          const history = cleanHistory.slice(0, -1).map((m: any) => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }],
+          }));
+
+          const latestMessage = cleanHistory.length > 0 
+            ? cleanHistory[cleanHistory.length - 1].content 
+            : messages[messages.length - 1].content;
+
+          const chatSession = genModel.startChat({ history });
+
+          const result = await chatSession.sendMessage(latestMessage);
+          const response = await result.response;
+          const text = response.text();
+
+          return NextResponse.json({ content: text, model: 'gemini' });
         }
-
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          console.error('Invalid OpenRouter response:', data);
-          throw new Error('Invalid response format from OpenRouter');
+      } catch (error: any) {
+        lastError = error;
+        const errorMsg = error.message || "";
+        
+        // If this is a 429 (quota exceeded) error, try next model
+        if (errorMsg.includes("429") || errorMsg.includes("quota") || errorMsg.includes("Too Many Requests")) {
+          console.warn(`Model ${currentModel} quota exceeded, trying next...`);
+          continue;
         }
-
-        const text = data.choices[0].message.content;
-        return NextResponse.json({ content: text });
-      } catch (openrouterError: any) {
-        console.error('OpenRouter Error:', openrouterError);
-        throw openrouterError;
+        
+        // For other errors, throw
+        throw error;
       }
-
-    } else if (model === 'groq') {
-      // Use Groq
-      if (!groqApiKey) {
-        return NextResponse.json({ error: "Groq API Key is missing" }, { status: 500 });
-      }
-
-      const groqMessages = messages.map((m: any) => ({
-        role: m.role === 'user' ? 'user' : 'assistant',
-        content: m.content,
-      }));
-
-      try {
-        const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${groqApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: 'llama-3.3-70b-versatile',
-            messages: groqMessages,
-            temperature: 0.7,
-            max_tokens: 2048,
-          }),
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          console.error('Groq response error:', data);
-          throw new Error(data.error?.message || data.error || `Groq Error: ${response.statusText}`);
-        }
-
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-          console.error('Invalid Groq response:', data);
-          throw new Error('Invalid response format from Groq');
-        }
-
-        const text = data.choices[0].message.content;
-        return NextResponse.json({ content: text });
-      } catch (groqError: any) {
-        console.error('Groq Error:', groqError);
-        throw groqError;
-      }
-
-    } else {
-      // Use Gemini (default)
-      if (!googleApiKey) {
-        return NextResponse.json({ error: "Google API Key is missing from .env.local" }, { status: 500 });
-      }
-
-      const genModel = genAI.getGenerativeModel({ 
-        model: "gemini-2.5-flash", 
-        systemInstruction: systemPrompt 
-      });
-
-      // --- Strict History Formatting ---
-      // Gemini requires: 1. Starts with User, 2. Alternates User/Model
-      const validRoles = messages.filter((m: any) => 
-        (m.role === 'user' || m.role === 'assistant') && m.content.trim() !== ""
-      );
-
-      const firstUserIndex = validRoles.findIndex((m: any) => m.role === 'user');
-      
-      // If we haven't started a conversation yet, we'll handle that
-      const cleanHistory = firstUserIndex !== -1 ? validRoles.slice(firstUserIndex) : [];
-
-      const history = cleanHistory.slice(0, -1).map((m: any) => ({
-        role: m.role === 'user' ? 'user' : 'model',
-        parts: [{ text: m.content }],
-      }));
-
-      const latestMessage = cleanHistory.length > 0 
-        ? cleanHistory[cleanHistory.length - 1].content 
-        : messages[messages.length - 1].content;
-
-      const chatSession = genModel.startChat({ history });
-
-      const result = await chatSession.sendMessage(latestMessage);
-      const response = await result.response;
-      const text = response.text();
-
-      return NextResponse.json({ content: text });
     }
+
+    // If all models failed, return the last error
+    throw lastError || new Error("All AI models are unavailable");
 
   } catch (error: any) {
     console.error('LUMI ERROR:', error);
@@ -162,6 +183,7 @@ export async function POST(request: NextRequest) {
     // Detailed error for debugging
     let msg = error.message || "Unknown connection error";
     if (msg.includes("404")) msg = "Model name out of date. Switched to Gemini 2.5 Flash.";
+    if (msg.includes("429") || msg.includes("quota")) msg = "All AI services are at quota. Please try again in a few minutes.";
 
     return NextResponse.json(
       { error: `Lumi Connection Error: ${msg}` },

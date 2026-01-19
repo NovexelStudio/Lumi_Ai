@@ -130,6 +130,17 @@ export async function saveMessage(userId: string, chatId: string, message: ChatM
     if (!realtimeDb) {
       throw new Error('Firebase database not initialized');
     }
+    
+    // Validate message has required fields
+    if (!message.content || message.content.trim() === '') {
+      console.warn('Skipping save of empty message:', message);
+      return;
+    }
+    
+    if (!message.role || !message.id) {
+      throw new Error('Message missing required fields: role or id');
+    }
+    
     const messageRef = ref(realtimeDb, `users/${userId}/messages/${chatId}/${message.id}`);
     await set(messageRef, {
       role: message.role,

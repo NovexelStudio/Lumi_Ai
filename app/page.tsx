@@ -19,6 +19,7 @@ import {
   saveMessage, loadMessages, createChat, deleteChat, 
   getUserChats, initializeUser 
 } from '@/lib/databaseService';
+import { ChatSidebar } from '@/components/ChatSidebar';
 
 // ────────────────────────────────────────────────
 // AGENT SELECTION COMPONENTS
@@ -39,75 +40,75 @@ interface Agent {
 
 const AGENTS: Agent[] = [
   {
-    id: 'lumi-core',
-    name: 'Core',
-    description: 'Balanced general-purpose AI with advanced reasoning',
+    id: 'gemini',
+    name: 'Gemini',
+    description: 'Google\'s advanced multimodal AI with reasoning capabilities',
     icon: <Brain />,
     color: 'from-purple-500 to-pink-500',
     capabilities: ['Reasoning', 'Analysis', 'Creativity', 'Problem Solving'],
     strength: 'Balanced',
     temperature: 0.7,
-    version: '4.2.1',
+    version: '2.0',
     isActive: true
   },
   {
-    id: 'lumi-coder',
-    name: 'Coder',
-    description: 'Specialized in programming and technical tasks',
+    id: 'groq',
+    name: 'Groq',
+    description: 'High-speed LLM inference with optimized performance',
     icon: <Code />,
     color: 'from-cyan-500 to-blue-500',
     capabilities: ['Code Generation', 'Debugging', 'Architecture', 'Optimization'],
     strength: 'Technical',
     temperature: 0.3,
-    version: '3.8.2',
+    version: '1.5.2',
     isActive: false
   },
   {
-    id: 'lumi-creative',
-    name: 'Creative',
-    description: 'Artistic and creative content generation',
+    id: 'router',
+    name: 'Router',
+    description: 'Intelligent routing and orchestration engine',
     icon: <Palette />,
     color: 'from-fuchsia-500 to-purple-500',
     capabilities: ['Content Creation', 'Storytelling', 'Design Ideas', 'Brand Voice'],
     strength: 'Creative',
     temperature: 0.9,
-    version: '2.5.0',
+    version: '1.2.0',
     isActive: false
   },
   {
-    id: 'lumi-analyst',
-    name: 'Analyst',
-    description: 'Data analysis and business intelligence',
+    id: 'claude',
+    name: 'Claude',
+    description: 'Anthropic\'s advanced language model with nuanced understanding',
     icon: <Grid3X3 />,
     color: 'from-emerald-500 to-teal-500',
     capabilities: ['Data Analysis', 'Research', 'Reports', 'Insights'],
     strength: 'Analytical',
     temperature: 0.4,
-    version: '3.1.4',
+    version: '3.1',
     isActive: false
   },
   {
-    id: 'lumi-research',
-    name: 'Research',
-    description: 'Academic research and in-depth analysis',
+    id: 'llama',
+    name: 'Llama',
+    description: 'Meta\'s open-source language model for research and development',
     icon: <FileText />,
     color: 'from-amber-500 to-orange-500',
     capabilities: ['Research Papers', 'Citations', 'Analysis', 'Summarization'],
     strength: 'Academic',
     temperature: 0.5,
-    version: '1.9.3',
+    version: '2.0.3',
     isActive: false
   },
   {
-    id: 'lumi-secure',
-    name: 'Secure',
-    description: 'Security-focused with enhanced privacy',
+    id: 'mixtral',
+    name: 'Mixtral',
+    description: 'Mixture of experts model with enhanced security protocols',
     icon: <Shield />,
     color: 'from-red-500 to-rose-500',
     capabilities: ['Security Analysis', 'Privacy', 'Compliance', 'Auditing'],
     strength: 'Security',
     temperature: 0.2,
-    version: '2.0.0',
+    version: '1.8.0',
     isActive: false
   }
 ];
@@ -424,7 +425,17 @@ export default function ChatPage() {
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `API Error: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      
+      if (!data.content) {
+        throw new Error('No response content from API');
+      }
+      
       const assistantContent = data.content;
       
       const assistantMessage = { 
@@ -465,19 +476,48 @@ export default function ChatPage() {
 
   return (
     <div className="relative h-screen flex overflow-hidden bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#050505] text-slate-200">
-      {/* Existing NeuralBackground component here */}
+      {/* Chat Sidebar */}
+      <ChatSidebar
+        chats={chats}
+        currentChatId={currentChatId}
+        onSelectChat={(chatId) => setCurrentChatId(chatId)}
+        onNewChat={() => {
+          setMessages([]);
+          setCurrentChatId(null);
+        }}
+        onDeleteChat={(chatId) => {
+          if (user) deleteChat(user.uid, chatId);
+          if (currentChatId === chatId) setCurrentChatId(null);
+          setChats(chats.filter(c => c.id !== chatId));
+        }}
+        open={sidebarOpen}
+        onOpenChange={setSidebarOpen}
+        userId={user?.uid}
+      />
 
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
         {/* Enhanced Header with Agent Selection */}
         <div className="sticky top-0 z-50 backdrop-blur-xl bg-gradient-to-b from-black/80 via-black/60 to-transparent border-b border-white/10">
           <div className="flex items-center justify-between px-6 md:px-10 py-4">
             <div className="flex items-center gap-4">
-              <button
+              {/* History Button with Badge - Single Toggle */}
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] transition-all hover:scale-105"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-fuchsia-500/10 to-cyan-500/10 border border-fuchsia-500/20 hover:border-fuchsia-500/40 transition-all group"
+                title={sidebarOpen ? "Hide History" : "Show History"}
               >
-                {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-              </button>
+                <MessageSquare size={16} className="text-fuchsia-400 group-hover:text-fuchsia-300 transition-colors" />
+                <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
+                  {sidebarOpen ? 'Hide' : 'History'}
+                </span>
+                {chats.length > 0 && (
+                  <span className="ml-1 px-2 py-0.5 rounded-full bg-fuchsia-500/20 text-[10px] font-bold text-fuchsia-400">
+                    {chats.length}
+                  </span>
+                )}
+              </motion.button>
               
               {/* Agent Selector */}
               <div ref={agentSelectorRef} className="relative">
@@ -495,8 +535,17 @@ export default function ChatPage() {
               <AgentStatusIndicator agent={selectedAgent} />
 
               <button
+                onClick={() => router.push('/account')}
+                className="p-2 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] transition-all hover:scale-105 group"
+                title="Account settings"
+              >
+                <User size={20} className="text-slate-400 group-hover:text-cyan-400 transition-colors" />
+              </button>
+
+              <button
                 onClick={logout}
                 className="p-2 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.06] transition-all hover:scale-105 group"
+                title="Logout"
               >
                 <LogOut size={20} className="text-slate-400 group-hover:text-red-400 transition-colors" />
               </button>
