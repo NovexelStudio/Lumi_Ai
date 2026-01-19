@@ -17,17 +17,31 @@ export function GoogleSignInButton() {
     setLoading(true);
 
     try {
+      if (!auth) {
+        setError('Firebase authentication not initialized. Check your configuration.');
+        setLoading(false);
+        return;
+      }
+
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       router.push('/');
       router.refresh();
     } catch (err: any) {
       if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-        setError(
-          err.message?.includes('account-exists-with-different-credential')
-            ? 'Credential mismatch: Email linked to another method.'
-            : 'Protocol failure: Connection to Google rejected.'
-        );
+        let errorMessage = err.message || 'Authentication failed';
+        
+        if (err.message?.includes('account-exists-with-different-credential')) {
+          errorMessage = 'Credential mismatch: Email linked to another method.';
+        } else if (err.message?.includes('popup-blocked') || err.code === 'auth/popup-blocked') {
+          errorMessage = 'Popup was blocked. Please enable popups and try again.';
+        } else if (err.message?.includes('Network') || err.code === 'auth/network-request-failed') {
+          errorMessage = 'Network error. Please check your connection.';
+        } else if (err.message?.includes('CORS') || err.message?.includes('protocol')) {
+          errorMessage = 'Configuration error. Please verify domain is authorized in Firebase Console.';
+        }
+        
+        setError(errorMessage);
       }
     } finally {
       setLoading(false);
