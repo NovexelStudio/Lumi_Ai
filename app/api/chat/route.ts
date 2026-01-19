@@ -7,11 +7,22 @@ const groqApiKey = process.env.GROQ_API_KEY;
 
 const genAI = new GoogleGenerativeAI(googleApiKey || "");
 
-const systemPrompt = "Your name is Lumi. You are a brilliant and friendly AI assistant for school projects. Use Markdown for formatting.";
+const systemPrompt = "Your name is Lumi. You are a helpful AI assistant. Use Markdown for formatting. Do not use emojis.";
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, model = 'gemini' } = await request.json();
+    const body = await request.json();
+    const { message, model = 'gemini', history = [] } = body;
+    
+    // Build messages array from history and current message
+    const messages = history && Array.isArray(history) ? history : [];
+    if (message && typeof message === 'string') {
+      messages.push({ role: 'user', content: message, timestamp: Date.now() });
+    }
+    
+    if (!messages || messages.length === 0) {
+      return NextResponse.json({ error: "No messages provided" }, { status: 400 });
+    }
 
     if (model === 'openrouter') {
       // Use OpenRouter
