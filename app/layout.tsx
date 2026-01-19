@@ -16,7 +16,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'LUMI AI | Neural Interface',
+  title: 'LUMI AI',
   description: 'Next-Gen AI Interface - Powered by Lumi v4',
   viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 };
