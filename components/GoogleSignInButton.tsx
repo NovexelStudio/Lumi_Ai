@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, initError } from '@/lib/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertCircle, ShieldCheck } from 'lucide-react';
 
 export function GoogleSignInButton() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(initError ? `Firebase Error: ${initError.message}` : null);
   const router = useRouter();
 
   const handleGoogleSignIn = async () => {
@@ -18,7 +18,7 @@ export function GoogleSignInButton() {
 
     try {
       if (!auth) {
-        setError('Firebase authentication not initialized. Check your configuration.');
+        setError('Firebase auth object is undefined. Check console for initialization errors.');
         setLoading(false);
         return;
       }

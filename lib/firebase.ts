@@ -16,21 +16,46 @@ const firebaseConfig = {
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL || '',
 };
 
+// Log which env vars are available
+if (typeof window !== 'undefined') {
+  console.log('Firebase Config Status:', {
+    hasApiKey: !!firebaseConfig.apiKey,
+    hasAuthDomain: !!firebaseConfig.authDomain,
+    hasProjectId: !!firebaseConfig.projectId,
+    hasAppId: !!firebaseConfig.appId,
+  });
+}
+
 let app: any;
 let auth: any;
 let db: any;
 let realtimeDb: any;
+let initError: Error | null = null;
 
 try {
-  if (firebaseConfig.apiKey) {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-    db = getFirestore(app);
-    realtimeDb = getDatabase(app);
+  if (!firebaseConfig.apiKey) {
+    throw new Error('Firebase API key not found. Check NEXT_PUBLIC_FIREBASE_API_KEY environment variable.');
+  }
+  
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  realtimeDb = getDatabase(app);
+  
+  if (typeof window !== 'undefined') {
+    console.log('Firebase initialized successfully');
   }
 } catch (error) {
+  initError = error as Error;
   console.error('Firebase initialization error:', error);
+  if (typeof window !== 'undefined') {
+    console.error('Firebase config:', {
+      apiKey: firebaseConfig.apiKey?.substring(0, 10) + '...',
+      authDomain: firebaseConfig.authDomain,
+      projectId: firebaseConfig.projectId,
+    });
+  }
 }
 
-export { auth, db, realtimeDb };
+export { auth, db, realtimeDb, initError };
 export default app;
