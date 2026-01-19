@@ -40,7 +40,7 @@ interface Agent {
 const AGENTS: Agent[] = [
   {
     id: 'lumi-core',
-    name: 'Lumi Core',
+    name: 'Core',
     description: 'Balanced general-purpose AI with advanced reasoning',
     icon: <Brain />,
     color: 'from-purple-500 to-pink-500',
@@ -52,7 +52,7 @@ const AGENTS: Agent[] = [
   },
   {
     id: 'lumi-coder',
-    name: 'Lumi Coder',
+    name: 'Coder',
     description: 'Specialized in programming and technical tasks',
     icon: <Code />,
     color: 'from-cyan-500 to-blue-500',
@@ -64,7 +64,7 @@ const AGENTS: Agent[] = [
   },
   {
     id: 'lumi-creative',
-    name: 'Lumi Creative',
+    name: 'Creative',
     description: 'Artistic and creative content generation',
     icon: <Palette />,
     color: 'from-fuchsia-500 to-purple-500',
@@ -76,7 +76,7 @@ const AGENTS: Agent[] = [
   },
   {
     id: 'lumi-analyst',
-    name: 'Lumi Analyst',
+    name: 'Analyst',
     description: 'Data analysis and business intelligence',
     icon: <Grid3X3 />,
     color: 'from-emerald-500 to-teal-500',
@@ -88,7 +88,7 @@ const AGENTS: Agent[] = [
   },
   {
     id: 'lumi-research',
-    name: 'Lumi Research',
+    name: 'Research',
     description: 'Academic research and in-depth analysis',
     icon: <FileText />,
     color: 'from-amber-500 to-orange-500',
@@ -100,7 +100,7 @@ const AGENTS: Agent[] = [
   },
   {
     id: 'lumi-secure',
-    name: 'Lumi Secure',
+    name: 'Secure',
     description: 'Security-focused with enhanced privacy',
     icon: <Shield />,
     color: 'from-red-500 to-rose-500',
@@ -148,7 +148,7 @@ const AgentSelector = ({
               {selectedAgent.name}
             </div>
             <p className="text-xs text-slate-400 truncate">
-              {selectedAgent.strength} • v{selectedAgent.version}
+              {selectedAgent.strength}
             </p>
           </div>
           
@@ -214,12 +214,9 @@ const AgentSelector = ({
                   <div className="text-white text-sm">{agent.icon}</div>
                 </div>
 
-                {/* Name & Version */}
-                <div className="flex items-start justify-between mb-2">
+                {/* Name */}
+                <div className="mb-2">
                   <span className="text-sm font-bold text-white">{agent.name}</span>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-white/[0.1] text-slate-300">
-                    v{agent.version}
-                  </span>
                 </div>
 
                 {/* Description */}
