@@ -36,6 +36,10 @@ export interface UserChat {
  */
 export async function getUserChats(userId: string): Promise<Chat[]> {
   try {
+    if (!realtimeDb) {
+      console.warn('Firebase database not initialized');
+      return [];
+    }
     const chatsRef = ref(realtimeDb, `users/${userId}/chats`);
     const snapshot = await get(chatsRef);
 
@@ -58,6 +62,9 @@ export async function getUserChats(userId: string): Promise<Chat[]> {
  */
 export async function createChat(userId: string, title: string = 'New Chat'): Promise<string> {
   try {
+    if (!realtimeDb) {
+      throw new Error('Firebase database not initialized');
+    }
     const chatId = Date.now().toString();
     const chatRef = ref(realtimeDb, `users/${userId}/chats/${chatId}`);
     
@@ -81,6 +88,9 @@ export async function createChat(userId: string, title: string = 'New Chat'): Pr
  */
 export async function deleteChat(userId: string, chatId: string): Promise<void> {
   try {
+    if (!realtimeDb) {
+      throw new Error('Firebase database not initialized');
+    }
     const chatRef = ref(realtimeDb, `users/${userId}/chats/${chatId}`);
     await remove(chatRef);
     
@@ -98,6 +108,9 @@ export async function deleteChat(userId: string, chatId: string): Promise<void> 
  */
 export async function renameChat(userId: string, chatId: string, newTitle: string): Promise<void> {
   try {
+    if (!realtimeDb) {
+      throw new Error('Firebase database not initialized');
+    }
     const chatRef = ref(realtimeDb, `users/${userId}/chats/${chatId}`);
     await update(chatRef, {
       title: newTitle,
@@ -114,6 +127,9 @@ export async function renameChat(userId: string, chatId: string, newTitle: strin
  */
 export async function saveMessage(userId: string, chatId: string, message: ChatMessage): Promise<void> {
   try {
+    if (!realtimeDb) {
+      throw new Error('Firebase database not initialized');
+    }
     const messageRef = ref(realtimeDb, `users/${userId}/messages/${chatId}/${message.id}`);
     await set(messageRef, {
       role: message.role,
@@ -138,6 +154,10 @@ export async function saveMessage(userId: string, chatId: string, message: ChatM
  */
 export async function loadMessages(userId: string, chatId: string): Promise<ChatMessage[]> {
   try {
+    if (!realtimeDb) {
+      console.warn('Firebase database not initialized');
+      return [];
+    }
     const messagesRef = ref(realtimeDb, `users/${userId}/messages/${chatId}`);
     const snapshot = await get(messagesRef);
 
@@ -164,6 +184,10 @@ export function subscribeToMessages(
   callback: (messages: ChatMessage[]) => void
 ): () => void {
   try {
+    if (!realtimeDb) {
+      console.warn('Firebase database not initialized');
+      return () => {};
+    }
     const messagesRef = ref(realtimeDb, `users/${userId}/messages`);
 
     const unsubscribe = onValue(
@@ -195,6 +219,9 @@ export function subscribeToMessages(
  */
 export async function clearMessages(userId: string, chatId: string): Promise<void> {
   try {
+    if (!realtimeDb) {
+      throw new Error('Firebase database not initialized');
+    }
     const messagesRef = ref(realtimeDb, `users/${userId}/messages/${chatId}`);
     await remove(messagesRef);
 
@@ -214,6 +241,10 @@ export async function clearMessages(userId: string, chatId: string): Promise<voi
  */
 export async function initializeUser(userId: string): Promise<void> {
   try {
+    if (!realtimeDb) {
+      console.warn('Firebase database not initialized');
+      return;
+    }
     const userRef = ref(realtimeDb, `users/${userId}`);
     const snapshot = await get(userRef);
 
