@@ -125,180 +125,127 @@ const AgentSelector = ({
 }) => {
   return (
     <div className="relative">
-      {/* Compact View */}
+      {/* Compact View - Agent Button */}
       {!isExpanded ? (
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={onToggleExpand}
-          className={`
-            relative flex items-center gap-3 px-4 py-3 rounded-2xl 
-            bg-gradient-to-br from-white/[0.03] to-white/[0.01]
-            border border-white/10 hover:border-white/20
-            transition-all duration-300 group
-          `}
+          className="
+            flex items-center gap-3 px-4 py-3 rounded-2xl 
+            bg-white/[0.05] border border-white/10 hover:border-white/30
+            transition-all duration-300 group hover:bg-white/[0.08]
+          "
         >
-          <div className="relative">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${selectedAgent.color} flex items-center justify-center`}>
-              <div className="text-white">
-                {selectedAgent.icon}
-              </div>
-            </div>
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0a0a0a]"
-            />
+          {/* Agent Icon */}
+          <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${selectedAgent.color} flex items-center justify-center flex-shrink-0`}>
+            <div className="text-white text-lg">{selectedAgent.icon}</div>
           </div>
           
-          <div className="flex-1 text-left">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold tracking-wide text-white">
-                {selectedAgent.name}
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.08] text-slate-300">
-                v{selectedAgent.version}
-              </span>
+          {/* Agent Info */}
+          <div className="flex-1 text-left min-w-0">
+            <div className="text-sm font-bold text-white truncate">
+              {selectedAgent.name}
             </div>
-            <p className="text-xs text-slate-400 truncate max-w-[140px]">
-              {selectedAgent.description}
+            <p className="text-xs text-slate-400 truncate">
+              {selectedAgent.strength} • v{selectedAgent.version}
             </p>
           </div>
           
-          <ChevronRight 
-            size={16} 
-            className="text-slate-500 group-hover:text-white transition-colors" 
-          />
+          {/* Chevron */}
+          <ChevronRight size={16} className="text-slate-500 group-hover:text-slate-300 flex-shrink-0" />
         </motion.button>
       ) : (
-        // Expanded View
+        // Expanded View - Agent Selector Grid
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className={`
-            absolute top-0 left-0 right-0 z-50 rounded-2xl p-1
-            bg-gradient-to-br from-white/[0.03] to-white/[0.01]
-            border border-white/10 backdrop-blur-xl
-            shadow-2xl shadow-black/50
-          `}
+          className="
+            absolute top-0 left-0 right-0 z-50 rounded-2xl p-4
+            bg-[#0a0a0a] border border-white/10 backdrop-blur-xl
+            shadow-2xl shadow-black/80 min-w-[500px] max-w-2xl
+          "
         >
-          <div className="p-4">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-lg font-bold tracking-tight text-white">
-                  Select Neural Agent
-                </h3>
-                <p className="text-sm text-slate-400">
-                  Choose specialized AI for your task
-                </p>
-              </div>
-              <button
-                onClick={onToggleExpand}
-                className="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
+          {/* Header */}
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h3 className="text-base font-bold text-white">Select Neural Agent</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Choose specialized AI for your task
+              </p>
+            </div>
+            <button
+              onClick={onToggleExpand}
+              className="p-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
+            >
+              <ChevronLeft size={18} className="text-slate-400" />
+            </button>
+          </div>
+
+          {/* Agent Grid */}
+          <div className="grid grid-cols-2 gap-3 mb-5">
+            {AGENTS.map((agent) => (
+              <motion.button
+                key={agent.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  onSelectAgent(agent);
+                  onToggleExpand();
+                }}
+                className={`
+                  relative p-4 rounded-xl text-left transition-all
+                  ${selectedAgent.id === agent.id
+                    ? `bg-gradient-to-br ${agent.color} opacity-20 border-2 border-white/30`
+                    : 'bg-white/[0.05] border border-white/10 hover:border-white/20'
+                  }
+                `}
               >
-                <ChevronLeft size={20} className="text-slate-400" />
-              </button>
-            </div>
-
-            {/* Agent Grid */}
-            <div className="grid grid-cols-2 gap-3">
-              {AGENTS.map((agent) => (
-                <motion.button
-                  key={agent.id}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    onSelectAgent(agent);
-                    onToggleExpand();
-                  }}
-                  className={`
-                    relative p-4 rounded-xl text-left transition-all duration-300
-                    ${selectedAgent.id === agent.id
-                      ? `bg-gradient-to-br ${agent.color}/20 border ${agent.color.replace('from-', 'border-').replace(' to-', '/40')}`
-                      : 'bg-white/[0.03] border border-white/10 hover:border-white/20'
-                    }
-                  `}
-                >
-                  {/* Active Indicator */}
-                  {selectedAgent.id === agent.id && (
-                    <motion.div
-                      layoutId="active-indicator"
-                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center"
-                    >
-                      <CheckCircle size={12} className="text-white" />
-                    </motion.div>
-                  )}
-
-                  {/* Agent Icon */}
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${agent.color} flex items-center justify-center mb-3`}>
-                    <div className="text-white">
-                      {agent.icon}
-                    </div>
+                {/* Selected Indicator */}
+                {selectedAgent.id === agent.id && (
+                  <div className="absolute top-2 right-2">
+                    <CheckCircle size={16} className="text-emerald-400" />
                   </div>
+                )}
 
-                  {/* Agent Info */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-bold text-white">
-                        {agent.name}
-                      </span>
-                      <span className="text-xs px-1.5 py-0.5 rounded bg-white/[0.08] text-slate-300">
-                        v{agent.version}
-                      </span>
-                    </div>
-                    
-                    <p className="text-xs text-slate-400 line-clamp-2">
-                      {agent.description}
-                    </p>
+                {/* Icon */}
+                <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${agent.color} flex items-center justify-center mb-2`}>
+                  <div className="text-white text-sm">{agent.icon}</div>
+                </div>
 
-                    {/* Strength Badge */}
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-500" />
-                      <span className="text-xs font-medium text-slate-300">
-                        {agent.strength}
-                      </span>
-                    </div>
-
-                    {/* Capabilities */}
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {agent.capabilities.slice(0, 2).map((cap, idx) => (
-                        <span
-                          key={idx}
-                          className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400"
-                        >
-                          {cap}
-                        </span>
-                      ))}
-                      {agent.capabilities.length > 2 && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400">
-                          +{agent.capabilities.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="mt-6 pt-6 border-t border-white/10">
-              <div className="flex items-center justify-between">
-                <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors">
-                  <Settings2 size={14} className="text-slate-400" />
-                  <span className="text-xs font-medium text-slate-300">
-                    Agent Settings
+                {/* Name & Version */}
+                <div className="flex items-start justify-between mb-2">
+                  <span className="text-sm font-bold text-white">{agent.name}</span>
+                  <span className="text-xs px-1.5 py-0.5 rounded bg-white/[0.1] text-slate-300">
+                    v{agent.version}
                   </span>
-                </button>
-                <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors">
-                  <Wand2 size={14} className="text-fuchsia-400" />
-                  <span className="text-xs font-medium text-slate-300">
-                    Custom Agent
-                  </span>
-                </button>
-              </div>
-            </div>
+                </div>
+
+                {/* Description */}
+                <p className="text-xs text-slate-400 line-clamp-2 mb-2">
+                  {agent.description}
+                </p>
+
+                {/* Strength */}
+                <div className="flex items-center gap-1.5">
+                  <Zap size={12} className="text-slate-400" />
+                  <span className="text-xs text-slate-400">{agent.strength}</span>
+                </div>
+              </motion.button>
+            ))}
+          </div>
+
+          {/* Footer Actions */}
+          <div className="border-t border-white/10 pt-4 flex gap-3">
+            <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors">
+              <Settings2 size={14} className="text-slate-400" />
+              <span className="text-xs font-medium text-slate-300">Settings</span>
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors">
+              <Wand2 size={14} className="text-fuchsia-400" />
+              <span className="text-xs font-medium text-slate-300">Custom</span>
+            </button>
           </div>
         </motion.div>
       )}
