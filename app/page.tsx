@@ -9,7 +9,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Send, Copy, Check, Cpu, Command, LayoutGrid, RefreshCw,
   Sparkles, Zap, Brain, ChevronLeft, ChevronRight, MoreVertical,
-  Settings, User, LogOut, Plus, Trash2
+  Settings, User, LogOut, Plus, Trash2, Settings2, Bot, Stars,
+  Globe, Code, Palette, MessageSquare, FileText, Rocket,
+  Shield, Lock, Zap as Lightning, Wand2, Grid3X3, CheckCircle
 } from 'lucide-react';
 
 import { useAuth } from '@/lib/authContext';
@@ -18,73 +20,342 @@ import {
   getUserChats, initializeUser 
 } from '@/lib/databaseService';
 
-import { ChatSidebar } from '@/components/ChatSidebar';
-import { ChatHeader } from '@/components/ChatHeader';
-
 // ────────────────────────────────────────────────
-// ENHANCED UI COMPONENTS
+// AGENT SELECTION COMPONENTS
 // ────────────────────────────────────────────────
 
-const NeuralBackground = () => (
-  <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#050505]">
-    {/* Animated Grid with Gradient */}
-    <motion.div 
-      initial={{ backgroundPosition: "0 0" }}
-      animate={{ backgroundPosition: ["0px 0px", "60px 60px"] }}
-      transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-      className="absolute inset-0 opacity-[0.15]"
-      style={{
-        backgroundImage: `linear-gradient(to right, rgba(168,85,247,0.1) 1px, transparent 1px), 
-                          linear-gradient(to bottom, rgba(168,85,247,0.1) 1px, transparent 1px)`,
-        backgroundSize: '60px 60px'
-      }}
-    />
-    
-    {/* Animated Particles */}
-    {[...Array(20)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-[1px] h-[1px] bg-cyan-500/40 rounded-full"
-        initial={{
-          x: Math.random() * 100 + 'vw',
-          y: Math.random() * 100 + 'vh',
-        }}
-        animate={{
-          x: [null, Math.random() * 100 + 'vw'],
-          y: [null, Math.random() * 100 + 'vh'],
-          opacity: [0.2, 0.8, 0.2],
-        }}
-        transition={{
-          duration: Math.random() * 10 + 10,
-          repeat: Infinity,
-          ease: "linear"
-        }}
-      />
-    ))}
-    
-    {/* Gradient Orbs */}
-    <motion.div 
-      animate={{ 
-        scale: [1, 1.2, 1],
-        opacity: [0.08, 0.15, 0.08],
-        x: [0, 40, 0],
-        y: [0, -20, 0]
-      }}
-      transition={{ duration: 18, repeat: Infinity }}
-      className="absolute top-[-15%] left-[15%] w-[50%] h-[50%] bg-gradient-to-br from-fuchsia-600/30 via-transparent to-transparent rounded-full blur-[180px]" 
-    />
-    <motion.div 
-      animate={{ 
-        scale: [1.2, 1, 1.2],
-        opacity: [0.05, 0.12, 0.05],
-        x: [0, -40, 0],
-        y: [0, 20, 0]
-      }}
-      transition={{ duration: 22, repeat: Infinity }}
-      className="absolute bottom-[-15%] right-[15%] w-[50%] h-[50%] bg-gradient-to-tl from-cyan-600/20 via-transparent to-transparent rounded-full blur-[180px]" 
-    />
-  </div>
-);
+interface Agent {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  capabilities: string[];
+  strength: string;
+  temperature: number;
+  version: string;
+  isActive: boolean;
+}
+
+const AGENTS: Agent[] = [
+  {
+    id: 'lumi-core',
+    name: 'Lumi Core',
+    description: 'Balanced general-purpose AI with advanced reasoning',
+    icon: <Brain />,
+    color: 'from-purple-500 to-pink-500',
+    capabilities: ['Reasoning', 'Analysis', 'Creativity', 'Problem Solving'],
+    strength: 'Balanced',
+    temperature: 0.7,
+    version: '4.2.1',
+    isActive: true
+  },
+  {
+    id: 'lumi-coder',
+    name: 'Lumi Coder',
+    description: 'Specialized in programming and technical tasks',
+    icon: <Code />,
+    color: 'from-cyan-500 to-blue-500',
+    capabilities: ['Code Generation', 'Debugging', 'Architecture', 'Optimization'],
+    strength: 'Technical',
+    temperature: 0.3,
+    version: '3.8.2',
+    isActive: false
+  },
+  {
+    id: 'lumi-creative',
+    name: 'Lumi Creative',
+    description: 'Artistic and creative content generation',
+    icon: <Palette />,
+    color: 'from-fuchsia-500 to-purple-500',
+    capabilities: ['Content Creation', 'Storytelling', 'Design Ideas', 'Brand Voice'],
+    strength: 'Creative',
+    temperature: 0.9,
+    version: '2.5.0',
+    isActive: false
+  },
+  {
+    id: 'lumi-analyst',
+    name: 'Lumi Analyst',
+    description: 'Data analysis and business intelligence',
+    icon: <Grid3X3 />,
+    color: 'from-emerald-500 to-teal-500',
+    capabilities: ['Data Analysis', 'Research', 'Reports', 'Insights'],
+    strength: 'Analytical',
+    temperature: 0.4,
+    version: '3.1.4',
+    isActive: false
+  },
+  {
+    id: 'lumi-research',
+    name: 'Lumi Research',
+    description: 'Academic research and in-depth analysis',
+    icon: <FileText />,
+    color: 'from-amber-500 to-orange-500',
+    capabilities: ['Research Papers', 'Citations', 'Analysis', 'Summarization'],
+    strength: 'Academic',
+    temperature: 0.5,
+    version: '1.9.3',
+    isActive: false
+  },
+  {
+    id: 'lumi-secure',
+    name: 'Lumi Secure',
+    description: 'Security-focused with enhanced privacy',
+    icon: <Shield />,
+    color: 'from-red-500 to-rose-500',
+    capabilities: ['Security Analysis', 'Privacy', 'Compliance', 'Auditing'],
+    strength: 'Security',
+    temperature: 0.2,
+    version: '2.0.0',
+    isActive: false
+  }
+];
+
+const AgentSelector = ({ 
+  selectedAgent, 
+  onSelectAgent,
+  isExpanded,
+  onToggleExpand 
+}: { 
+  selectedAgent: Agent;
+  onSelectAgent: (agent: Agent) => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}) => {
+  return (
+    <div className="relative">
+      {/* Compact View */}
+      {!isExpanded ? (
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onToggleExpand}
+          className={`
+            relative flex items-center gap-3 px-4 py-3 rounded-2xl 
+            bg-gradient-to-br from-white/[0.03] to-white/[0.01]
+            border border-white/10 hover:border-white/20
+            transition-all duration-300 group
+          `}
+        >
+          <div className="relative">
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${selectedAgent.color} flex items-center justify-center`}>
+              <div className="text-white">
+                {selectedAgent.icon}
+              </div>
+            </div>
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0a0a0a]"
+            />
+          </div>
+          
+          <div className="flex-1 text-left">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold tracking-wide text-white">
+                {selectedAgent.name}
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-white/[0.08] text-slate-300">
+                v{selectedAgent.version}
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 truncate max-w-[140px]">
+              {selectedAgent.description}
+            </p>
+          </div>
+          
+          <ChevronRight 
+            size={16} 
+            className="text-slate-500 group-hover:text-white transition-colors" 
+          />
+        </motion.button>
+      ) : (
+        // Expanded View
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          className={`
+            absolute top-0 left-0 right-0 z-50 rounded-2xl p-1
+            bg-gradient-to-br from-white/[0.03] to-white/[0.01]
+            border border-white/10 backdrop-blur-xl
+            shadow-2xl shadow-black/50
+          `}
+        >
+          <div className="p-4">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-bold tracking-tight text-white">
+                  Select Neural Agent
+                </h3>
+                <p className="text-sm text-slate-400">
+                  Choose specialized AI for your task
+                </p>
+              </div>
+              <button
+                onClick={onToggleExpand}
+                className="p-2 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
+              >
+                <ChevronLeft size={20} className="text-slate-400" />
+              </button>
+            </div>
+
+            {/* Agent Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {AGENTS.map((agent) => (
+                <motion.button
+                  key={agent.id}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    onSelectAgent(agent);
+                    onToggleExpand();
+                  }}
+                  className={`
+                    relative p-4 rounded-xl text-left transition-all duration-300
+                    ${selectedAgent.id === agent.id
+                      ? `bg-gradient-to-br ${agent.color}/20 border ${agent.color.replace('from-', 'border-').replace(' to-', '/40')}`
+                      : 'bg-white/[0.03] border border-white/10 hover:border-white/20'
+                    }
+                  `}
+                >
+                  {/* Active Indicator */}
+                  {selectedAgent.id === agent.id && (
+                    <motion.div
+                      layoutId="active-indicator"
+                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center"
+                    >
+                      <CheckCircle size={12} className="text-white" />
+                    </motion.div>
+                  )}
+
+                  {/* Agent Icon */}
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${agent.color} flex items-center justify-center mb-3`}>
+                    <div className="text-white">
+                      {agent.icon}
+                    </div>
+                  </div>
+
+                  {/* Agent Info */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-bold text-white">
+                        {agent.name}
+                      </span>
+                      <span className="text-xs px-1.5 py-0.5 rounded bg-white/[0.08] text-slate-300">
+                        v{agent.version}
+                      </span>
+                    </div>
+                    
+                    <p className="text-xs text-slate-400 line-clamp-2">
+                      {agent.description}
+                    </p>
+
+                    {/* Strength Badge */}
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-gradient-to-r from-fuchsia-500 to-cyan-500" />
+                      <span className="text-xs font-medium text-slate-300">
+                        {agent.strength}
+                      </span>
+                    </div>
+
+                    {/* Capabilities */}
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {agent.capabilities.slice(0, 2).map((cap, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400"
+                        >
+                          {cap}
+                        </span>
+                      ))}
+                      {agent.capabilities.length > 2 && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-400">
+                          +{agent.capabilities.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Quick Actions */}
+            <div className="mt-6 pt-6 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors">
+                  <Settings2 size={14} className="text-slate-400" />
+                  <span className="text-xs font-medium text-slate-300">
+                    Agent Settings
+                  </span>
+                </button>
+                <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.05] hover:bg-white/[0.1] transition-colors">
+                  <Wand2 size={14} className="text-fuchsia-400" />
+                  <span className="text-xs font-medium text-slate-300">
+                    Custom Agent
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
+};
+
+const AgentStatusIndicator = ({ agent }: { agent: Agent }) => {
+  return (
+    <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10">
+      {/* Temperature Indicator */}
+      <div className="flex items-center gap-2">
+        <div className="relative w-16 h-2 rounded-full bg-white/[0.1] overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${agent.temperature * 100}%` }}
+            className={`absolute h-full rounded-full bg-gradient-to-r ${agent.color}`}
+          />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[8px] font-bold text-slate-400 mix-blend-overlay">
+              {agent.temperature.toFixed(1)}
+            </span>
+          </div>
+        </div>
+        <span className="text-xs text-slate-400">Temp</span>
+      </div>
+
+      {/* Strength Indicator */}
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <div className="w-8 h-8 rounded-full bg-white/[0.05] border border-white/10 flex items-center justify-center">
+            <Zap size={12} className={`
+              ${agent.strength === 'Creative' ? 'text-fuchsia-400' : ''}
+              ${agent.strength === 'Technical' ? 'text-cyan-400' : ''}
+              ${agent.strength === 'Analytical' ? 'text-emerald-400' : ''}
+            `} />
+          </div>
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute -inset-1 border border-white/10 rounded-full"
+          />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-medium text-slate-300">
+            {agent.strength}
+          </span>
+          <span className="text-[10px] text-slate-500">Focus</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ────────────────────────────────────────────────
+// UI SUB-COMPONENTS
+// ────────────────────────────────────────────────
 
 const MarkdownRenderer = ({ content }: { content: string }) => (
   <ReactMarkdown
@@ -92,56 +363,27 @@ const MarkdownRenderer = ({ content }: { content: string }) => (
       code({ node, inline, className, children, ...props }: any) {
         const match = /language-(\w+)/.exec(className || '');
         return !inline && match ? (
-          <div className="my-8 rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-[#0c0c0c] to-[#080808] shadow-2xl shadow-black/50">
-            <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-white/[0.03] to-transparent border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="flex gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-red-500/60" />
-                  <div className="w-2 h-2 rounded-full bg-yellow-500/60" />
-                  <div className="w-2 h-2 rounded-full bg-green-500/60" />
-                </div>
-                <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">{match[1]}</span>
-              </div>
-              <button className="text-slate-500 hover:text-slate-300 transition-colors">
-                <Copy size={14} />
-              </button>
+          <div className="my-6 rounded-3xl overflow-hidden border border-white/5 bg-[#080808] shadow-2xl">
+            <div className="flex items-center justify-between px-5 py-3 bg-white/[0.03] border-b border-white/5">
+              <span className="text-[10px] font-black tracking-widest text-slate-500 uppercase">{match[1]}</span>
             </div>
             <SyntaxHighlighter
               style={oneDark}
               language={match[1]}
               PreTag="div"
-              customStyle={{ 
-                margin: 0, 
-                padding: '1.75rem', 
-                background: 'transparent', 
-                fontSize: '0.875rem',
-                lineHeight: '1.6'
-              }}
+              customStyle={{ margin: 0, padding: '1.5rem', background: 'transparent', fontSize: '0.85rem' }}
               {...props}
             >
               {String(children).replace(/\n$/, '')}
             </SyntaxHighlighter>
           </div>
         ) : (
-          <code className="relative bg-gradient-to-r from-fuchsia-500/10 to-cyan-500/5 text-fuchsia-300 px-2 py-1 rounded-lg font-mono text-sm border border-white/10 shadow-inner">
+          <code className="bg-fuchsia-500/10 text-fuchsia-300 px-1.5 py-0.5 rounded font-mono text-sm border border-fuchsia-500/20">
             {children}
           </code>
         );
       },
-      p: ({ children }) => <p className="mb-5 leading-[1.85] text-slate-300/95 font-medium tracking-wide">{children}</p>,
-      h1: ({ children }) => <h1 className="text-2xl font-bold text-white mb-4 mt-6 tracking-tight">{children}</h1>,
-      h2: ({ children }) => <h2 className="text-xl font-bold text-white mb-3 mt-5 tracking-tight">{children}</h2>,
-      h3: ({ children }) => <h3 className="text-lg font-bold text-white mb-2 mt-4 tracking-tight">{children}</h3>,
-      ul: ({ children }) => <ul className="mb-5 pl-5 space-y-2">{children}</ul>,
-      li: ({ children }) => <li className="text-slate-300/90 flex items-start">
-        <div className="w-1.5 h-1.5 rounded-full bg-fuchsia-500/60 mt-2 mr-3 flex-shrink-0" />
-        {children}
-      </li>,
-      blockquote: ({ children }) => (
-        <blockquote className="border-l-4 border-fuchsia-500/40 pl-5 py-2 my-6 bg-gradient-to-r from-white/[0.02] to-transparent italic text-slate-400">
-          {children}
-        </blockquote>
-      ),
+      p: ({ children }) => <p className="mb-4 leading-[1.8] text-slate-300/90 font-medium">{children}</p>,
     }}
   >
     {content}
@@ -160,15 +402,28 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
-  const [selectedModel, setSelectedModel] = useState('gemini');
+  const [selectedAgent, setSelectedAgent] = useState<Agent>(AGENTS[0]);
   const [chats, setChats] = useState<any[]>([]);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [inputHeight, setInputHeight] = useState(56);
+  const [agentSelectorExpanded, setAgentSelectorExpanded] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const agentSelectorRef = useRef<HTMLDivElement>(null);
+
+  // Close agent selector when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (agentSelectorRef.current && !agentSelectorRef.current.contains(event.target as Node)) {
+        setAgentSelectorExpanded(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -197,13 +452,14 @@ export default function ChatPage() {
       id: Date.now(), 
       role: 'user', 
       content: input, 
-      timestamp: Date.now() 
+      timestamp: Date.now(),
+      agent: selectedAgent.id
     };
     
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
-    setInputHeight(56); // Reset input height
+    setInputHeight(56);
 
     try {
       let chatId = currentChatId;
@@ -218,7 +474,8 @@ export default function ChatPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           message: input, 
-          model: selectedModel, 
+          agent: selectedAgent.id,
+          model: 'gemini',
           history: messages 
         }),
       });
@@ -230,7 +487,8 @@ export default function ChatPage() {
         id: Date.now() + 1, 
         role: 'assistant', 
         content: assistantContent, 
-        timestamp: Date.now() 
+        timestamp: Date.now(),
+        agent: selectedAgent.id
       };
       
       setMessages(prev => [...prev, assistantMessage]);
@@ -263,26 +521,10 @@ export default function ChatPage() {
 
   return (
     <div className="relative h-screen flex overflow-hidden bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#050505] text-slate-200">
-      <NeuralBackground />
-
-      <ChatSidebar
-        chats={chats}
-        currentChatId={currentChatId}
-        onSelectChat={setCurrentChatId}
-        onNewChat={async () => { 
-          setCurrentChatId(null); 
-          setMessages([]); 
-        }}
-        onDeleteChat={async (id) => { 
-          await deleteChat(user.uid, id); 
-          getUserChats(user.uid).then(setChats); 
-        }}
-        open={sidebarOpen}
-        onOpenChange={setSidebarOpen}
-      />
+      {/* Existing NeuralBackground component here */}
 
       <main className="flex-1 flex flex-col min-w-0 relative z-10">
-        {/* Floating Header */}
+        {/* Enhanced Header with Agent Selection */}
         <div className="sticky top-0 z-50 backdrop-blur-xl bg-gradient-to-b from-black/80 via-black/60 to-transparent border-b border-white/10">
           <div className="flex items-center justify-between px-6 md:px-10 py-4">
             <div className="flex items-center gap-4">
@@ -293,27 +535,20 @@ export default function ChatPage() {
                 {sidebarOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
               </button>
               
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-                <span className="text-sm font-bold tracking-wider text-slate-300">
-                  Lumi v4.2.1
-                </span>
+              {/* Agent Selector */}
+              <div ref={agentSelectorRef} className="relative">
+                <AgentSelector
+                  selectedAgent={selectedAgent}
+                  onSelectAgent={setSelectedAgent}
+                  isExpanded={agentSelectorExpanded}
+                  onToggleExpand={() => setAgentSelectorExpanded(!agentSelectorExpanded)}
+                />
               </div>
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="relative">
-                <select
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="appearance-none bg-white/[0.03] border border-white/10 rounded-xl px-4 py-2 text-sm font-medium tracking-wide text-slate-300 focus:outline-none focus:ring-2 focus:ring-fuchsia-500/30 focus:border-fuchsia-500/50"
-                >
-                  <option value="gemini" className="bg-[#0a0a0a]">Gemini Pro</option>
-                  <option value="gpt4" className="bg-[#0a0a0a]">GPT-4 Turbo</option>
-                  <option value="claude" className="bg-[#0a0a0a]">Claude 3</option>
-                </select>
-                <Sparkles className="absolute right-3 top-1/2 transform -translate-y-1/2 text-fuchsia-500/60" size={16} />
-              </div>
+              {/* Agent Status Indicator */}
+              <AgentStatusIndicator agent={selectedAgent} />
 
               <button
                 onClick={logout}
@@ -325,18 +560,19 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Chat Messages */}
+        {/* Chat Messages with Agent Context */}
         <div className="flex-1 overflow-y-auto px-4 md:px-8 lg:px-12 py-8 custom-scrollbar">
           <div className="max-w-4xl mx-auto pb-32">
             <AnimatePresence mode="popLayout">
               {messages.length === 0 ? (
-                <EmptyState />
+                <EmptyState selectedAgent={selectedAgent} />
               ) : (
                 messages.map((msg) => (
                   <MessageBubble 
                     key={msg.id} 
                     msg={msg} 
                     isUser={msg.role === 'user'} 
+                    agent={AGENTS.find(a => a.id === msg.agent) || AGENTS[0]}
                     onCopy={() => {
                       navigator.clipboard.writeText(msg.content);
                       setCopiedId(msg.id);
@@ -351,19 +587,19 @@ export default function ChatPage() {
           </div>
         </div>
 
-        {/* Input Section */}
+        {/* Enhanced Input Section with Agent Context */}
         <div className="fixed bottom-0 inset-x-0 z-40 p-6 md:p-8 bg-gradient-to-t from-black via-black/95 to-transparent">
           <div className="max-w-4xl mx-auto">
             <motion.div
               initial={false}
               animate={{ 
                 boxShadow: isLoading 
-                  ? "0 0 60px rgba(217,70,239,0.15), 0 0 30px rgba(6,182,212,0.1)" 
+                  ? `0 0 60px ${selectedAgent.color.split(' ')[0].replace('from-', 'rgba(').replace('-500', ',0.15)')}` 
                   : "0 0 20px rgba(0,0,0,0.3)" 
               }}
               className="relative group"
             >
-              {/* Loading Animation Border */}
+              {/* Loading Animation with Agent Color */}
               <AnimatePresence>
                 {isLoading && (
                   <motion.div
@@ -371,7 +607,6 @@ export default function ChatPage() {
                     animate={{ 
                       opacity: [0.2, 0.4, 0.2],
                       scale: [1, 1.02, 1],
-                      rotate: [0, 180, 360]
                     }}
                     exit={{ opacity: 0 }}
                     transition={{ 
@@ -379,7 +614,7 @@ export default function ChatPage() {
                       repeat: Infinity,
                       ease: "linear"
                     }}
-                    className="absolute -inset-[2px] bg-gradient-to-r from-fuchsia-600 via-cyan-500 to-fuchsia-600 rounded-3xl blur-md z-0"
+                    className={`absolute -inset-[2px] bg-gradient-to-r ${selectedAgent.color} rounded-3xl blur-md z-0`}
                   />
                 )}
               </AnimatePresence>
@@ -387,17 +622,26 @@ export default function ChatPage() {
               <div className={`
                 relative z-10 rounded-3xl p-2 flex items-end border transition-all duration-500
                 ${isLoading 
-                  ? 'border-fuchsia-500/40 bg-gradient-to-r from-[#0a0a0a] to-[#0c0c0c] shadow-2xl shadow-fuchsia-500/10' 
+                  ? `border-${selectedAgent.color.split(' ')[0].replace('from-', '').replace('-500', '')}/40 bg-gradient-to-r from-[#0a0a0a] to-[#0c0c0c]` 
                   : 'border-white/10 bg-gradient-to-r from-[#0a0a0a] to-[#080808] hover:border-white/20'}
               `}>
-                {/* Input Actions */}
+                {/* Agent-specific Actions */}
                 <div className="flex items-center gap-2 pl-4 pb-3">
-                  <button className="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-all hover:scale-110">
-                    <Brain size={18} className="text-fuchsia-500/60" />
-                  </button>
-                  <button className="p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] transition-all hover:scale-110">
-                    <Sparkles size={18} className="text-cyan-500/60" />
-                  </button>
+                  <div className={`p-2.5 rounded-xl bg-gradient-to-br ${selectedAgent.color}/20 border ${selectedAgent.color.split(' ')[0].replace('from-', 'border-').replace('-500', '/30')}`}>
+                    {selectedAgent.icon}
+                  </div>
+                  
+                  {/* Quick Capabilities */}
+                  <div className="flex gap-1">
+                    {selectedAgent.capabilities.slice(0, 2).map((cap, idx) => (
+                      <span
+                        key={idx}
+                        className="text-[10px] px-2 py-1 rounded-full bg-white/[0.05] text-slate-400"
+                      >
+                        {cap}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Text Area */}
@@ -412,7 +656,9 @@ export default function ChatPage() {
                       sendMessage();
                     }
                   }}
-                  placeholder={isLoading ? "Processing neural patterns..." : "Enter your query... (Shift + Enter for new line)"}
+                  placeholder={isLoading 
+                    ? `${selectedAgent.name} is processing your request...` 
+                    : `Ask ${selectedAgent.name}... (Shift + Enter for new line)`}
                   rows={1}
                   style={{ height: `${inputHeight}px` }}
                   className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-white placeholder-slate-500 text-[15px] leading-relaxed resize-none font-medium tracking-wide custom-scrollbar"
@@ -428,7 +674,7 @@ export default function ChatPage() {
                     className={`
                       relative overflow-hidden p-4 rounded-2xl transition-all duration-500 
                       ${input.trim() && !isLoading
-                        ? 'bg-gradient-to-r from-fuchsia-600 to-cyan-500 text-white shadow-xl shadow-fuchsia-500/30'
+                        ? `bg-gradient-to-r ${selectedAgent.color} text-white shadow-xl`
                         : 'bg-white/[0.03] text-slate-600 border border-white/10'
                       }
                     `}
@@ -450,9 +696,9 @@ export default function ChatPage() {
                 </div>
               </div>
 
-              {/* Bottom Status Bar */}
+              {/* Enhanced Bottom Status Bar */}
               <div className="flex justify-between items-center mt-4 px-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2">
                     <motion.div
                       animate={{ 
@@ -460,24 +706,29 @@ export default function ChatPage() {
                         opacity: isLoading ? [0.6, 1, 0.6] : 1
                       }}
                       transition={{ duration: 1.5, repeat: Infinity }}
-                      className={`w-2 h-2 rounded-full ${isLoading ? 'bg-gradient-to-r from-fuchsia-500 to-cyan-500' : 'bg-emerald-500'}`}
+                      className={`w-2 h-2 rounded-full bg-gradient-to-r ${selectedAgent.color}`}
                     />
                     <span className="text-[10px] font-bold tracking-wider uppercase text-slate-400">
-                      {isLoading ? 'SYNCING NEURAL NETWORK' : 'SYSTEM READY'}
+                      {isLoading ? 'AGENT PROCESSING' : `${selectedAgent.name.toUpperCase()} READY`}
                     </span>
                   </div>
                   
-                  <span className="text-[10px] text-slate-600 font-medium">
-                    {messages.length} messages
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-slate-600 font-medium">
+                      Strength:
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-300">
+                      {selectedAgent.strength}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-4">
+                  <span className="text-xs text-slate-500">
+                    Temperature: {selectedAgent.temperature.toFixed(1)}
+                  </span>
                   <button className="text-xs text-slate-500 hover:text-slate-300 transition-colors font-medium">
-                    Clear Context
-                  </button>
-                  <button className="text-xs text-slate-500 hover:text-slate-300 transition-colors font-medium">
-                    Export Chat
+                    Switch Agent
                   </button>
                 </div>
               </div>
@@ -489,7 +740,8 @@ export default function ChatPage() {
   );
 }
 
-function MessageBubble({ msg, isUser, onCopy, isCopied }: any) {
+// Update MessageBubble to show agent
+function MessageBubble({ msg, isUser, agent, onCopy, isCopied }: any) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -497,22 +749,32 @@ function MessageBubble({ msg, isUser, onCopy, isCopied }: any) {
       transition={{ duration: 0.3 }}
       className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} mb-8 group`}
     >
-      {/* Header */}
+      {/* Header with Agent Info */}
       <div className={`flex items-center gap-3 mb-3 ${isUser ? 'flex-row-reverse' : ''}`}>
-        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isUser ? 'bg-gradient-to-br from-cyan-500 to-cyan-600' : 'bg-gradient-to-br from-fuchsia-500 to-purple-600'}`}>
+        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isUser 
+          ? 'bg-gradient-to-br from-cyan-500 to-cyan-600' 
+          : `bg-gradient-to-br ${agent.color}`
+        }`}>
           {isUser ? (
             <User size={16} className="text-white" />
           ) : (
-            <Cpu size={16} className="text-white" />
+            agent.icon
           )}
         </div>
         <div className="flex flex-col">
-          <span className={`text-sm font-bold tracking-wide ${isUser ? 'text-cyan-400' : 'text-fuchsia-400'}`}>
-            {isUser ? 'You' : 'Lumi AI'}
+          <span className={`text-sm font-bold tracking-wide ${isUser ? 'text-cyan-400' : 'text-slate-300'}`}>
+            {isUser ? 'You' : agent.name}
           </span>
-          <span className="text-xs text-slate-500">
-            {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">
+              {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            {!isUser && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/[0.05] text-slate-400">
+                {agent.strength}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -521,8 +783,8 @@ function MessageBubble({ msg, isUser, onCopy, isCopied }: any) {
         <div className={`
           relative px-6 py-5 rounded-3xl transition-all duration-500 backdrop-blur-sm
           ${isUser 
-            ? 'bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20 shadow-xl shadow-cyan-500/5' 
-            : 'bg-gradient-to-r from-white/[0.03] to-white/[0.01] border border-white/10 shadow-2xl shadow-black/30'
+            ? 'bg-gradient-to-r from-cyan-500/10 to-cyan-500/5 border border-cyan-500/20' 
+            : `bg-gradient-to-r ${agent.color}/10 to-white/[0.01] border ${agent.color.split(' ')[0].replace('from-', 'border-').replace('-500', '/30')}`
           }
         `}>
           <div className="text-[15px] leading-relaxed tracking-wide">
@@ -548,7 +810,7 @@ function MessageBubble({ msg, isUser, onCopy, isCopied }: any) {
               )}
             </button>
             <button className="p-2 rounded-xl bg-white/[0.03] border border-white/10 hover:bg-white/[0.08] transition-all hover:scale-110">
-              <Sparkles size={14} className="text-fuchsia-400" />
+              <Sparkles size={14} className={agent.color.includes('fuchsia') ? 'text-fuchsia-400' : 'text-cyan-400'} />
             </button>
           </motion.div>
         )}
@@ -557,12 +819,13 @@ function MessageBubble({ msg, isUser, onCopy, isCopied }: any) {
   );
 }
 
-function EmptyState() {
+// Update EmptyState to show agent capabilities
+function EmptyState({ selectedAgent }: { selectedAgent: Agent }) {
   const suggestions = [
-    "Explain quantum computing in simple terms",
-    "Write a Python script for data analysis",
-    "Help me plan a workout routine",
-    "Generate creative ideas for a blog post"
+    `Explain ${selectedAgent.strength.toLowerCase()} concepts in simple terms`,
+    `Help me with a ${selectedAgent.capabilities[0].toLowerCase()} task`,
+    `Generate ${selectedAgent.strength.toLowerCase()} content about...`,
+    `Analyze this using ${selectedAgent.name}'s capabilities`
   ];
 
   return (
@@ -572,7 +835,7 @@ function EmptyState() {
       transition={{ duration: 0.5 }}
       className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4"
     >
-      {/* Animated Logo */}
+      {/* Animated Agent Logo */}
       <motion.div
         animate={{
           scale: [1, 1.05, 1],
@@ -581,26 +844,41 @@ function EmptyState() {
         transition={{ duration: 4, repeat: Infinity }}
         className="relative mb-8"
       >
-        <div className="w-24 h-24 rounded-3xl bg-gradient-to-br from-fuchsia-500/20 via-transparent to-cyan-500/20 border border-white/10 flex items-center justify-center shadow-2xl shadow-fuchsia-500/10">
-          <div className="absolute inset-4 rounded-2xl bg-gradient-to-br from-fuchsia-500/30 to-cyan-500/30 blur-xl" />
-          <Cpu size={40} className="relative z-10 text-white" />
+        <div className={`w-24 h-24 rounded-3xl bg-gradient-to-br ${selectedAgent.color}/20 border border-white/10 flex items-center justify-center shadow-2xl`}>
+          <div className="absolute inset-4 rounded-2xl bg-gradient-to-br ${selectedAgent.color}/30 blur-xl" />
+          <div className="relative z-10 text-white">
+            {selectedAgent.icon}
+          </div>
         </div>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -inset-4 rounded-3xl border border-fuchsia-500/30 border-t-transparent"
+          className="absolute -inset-4 rounded-3xl border border-white/10 border-t-transparent"
         />
       </motion.div>
 
-      {/* Title */}
-      <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-3 bg-gradient-to-r from-white via-white to-fuchsia-200 bg-clip-text text-transparent">
-        Lumi Neural Interface
+      {/* Agent-specific Welcome */}
+      <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white mb-3">
+        {selectedAgent.name} Active
       </h1>
-      <p className="text-slate-400 text-sm font-medium tracking-wide mb-8 max-w-md">
-        Advanced AI assistant ready to process your queries with enhanced neural capabilities
+      <p className="text-slate-400 text-sm font-medium tracking-wide mb-6 max-w-md">
+        {selectedAgent.description}
       </p>
 
-      {/* Suggestions */}
+      {/* Agent Capabilities */}
+      <div className="flex flex-wrap gap-2 justify-center mb-8">
+        {selectedAgent.capabilities.map((capability, index) => (
+          <motion.span
+            key={index}
+            whileHover={{ scale: 1.05 }}
+            className="px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/10 text-xs text-slate-300"
+          >
+            {capability}
+          </motion.span>
+        ))}
+      </div>
+
+      {/* Agent-specific Suggestions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl w-full mb-10">
         {suggestions.map((suggestion, index) => (
           <motion.button
@@ -610,8 +888,8 @@ function EmptyState() {
             className="p-4 rounded-2xl bg-white/[0.02] border border-white/10 hover:border-white/20 text-left group hover:bg-white/[0.04] transition-all"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-fuchsia-500/10 to-cyan-500/10">
-                <Zap size={16} className="text-fuchsia-400" />
+              <div className={`p-2 rounded-xl bg-gradient-to-br ${selectedAgent.color}/10`}>
+                <Zap size={16} className={`${selectedAgent.color.includes('fuchsia') ? 'text-fuchsia-400' : 'text-cyan-400'}`} />
               </div>
               <span className="text-sm text-slate-300 group-hover:text-white transition-colors">
                 {suggestion}
@@ -621,19 +899,19 @@ function EmptyState() {
         ))}
       </div>
 
-      {/* Stats */}
+      {/* Agent Stats */}
       <div className="flex items-center gap-6 text-xs text-slate-500">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="font-medium">System Online</span>
+          <span className="font-medium">{selectedAgent.name} Online</span>
         </div>
         <div className="flex items-center gap-2">
-          <Sparkles size={12} className="text-fuchsia-500" />
-          <span className="font-medium">v4.2.1</span>
+          <Sparkles size={12} className={selectedAgent.color.includes('fuchsia') ? 'text-fuchsia-500' : 'text-cyan-500'} />
+          <span className="font-medium">v{selectedAgent.version}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Cpu size={12} className="text-cyan-500" />
-          <span className="font-medium">Neural AI</span>
+          <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${selectedAgent.color}`} />
+          <span className="font-medium">Temp: {selectedAgent.temperature}</span>
         </div>
       </div>
     </motion.div>
