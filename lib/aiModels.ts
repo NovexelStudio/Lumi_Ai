@@ -1,5 +1,14 @@
 export const AI_MODELS = [
   {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    description: 'Advanced reasoning & analysis',
+    icon: '🤖',
+    color: 'from-green-500 to-emerald-500',
+    speed: 800,
+    beta: false,
+  },
+  {
     id: 'gemini',
     name: 'Google Gemini',
     description: 'Fast and powerful',

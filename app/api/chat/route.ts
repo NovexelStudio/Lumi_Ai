@@ -1,9 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
 
 const googleApiKey = process.env.GOOGLE_API_KEY;
 const openRouterApiKey = process.env.OPENROUTER_API_KEY;
 const groqApiKey = process.env.GROQ_API_KEY;
+const openaiApiKey = process.env.OPENAI_API_KEY;
+
+const openai = new OpenAI({ apiKey: openaiApiKey || "" });
 
 const genAI = new GoogleGenerativeAI(googleApiKey || "");
 
@@ -26,14 +30,46 @@ export async function POST(request: NextRequest) {
 
     // Try the requested model first, then fallback to alternatives on quota exceeded
     const modelPriority = model === 'gemini' 
-      ? ['gemini', 'groq', 'openrouter']
-      : [model, 'groq', 'gemini', 'openrouter'];
+      ? ['gemini', 'chatgpt', 'groq', 'openrouter']
+      : model === 'chatgpt'
+      ? ['chatgpt', 'gemini', 'groq', 'openrouter']
+      : [model, 'gemini', 'groq', 'openrouter'];
 
     let lastError: any = null;
 
     for (const currentModel of modelPriority) {
       try {
-        if (currentModel === 'openrouter') {
+        if (currentModel === 'chatgpt') {
+          // Use ChatGPT (OpenAI)
+          if (!openaiApiKey) {
+            lastError = new Error("OpenAI API Key is missing from .env.local");
+            continue;
+          }
+
+          const gptMessages = messages.map((m: any) => ({
+            role: m.role === 'user' ? 'user' : 'assistant',
+            content: m.content,
+          }));
+
+          const response = await openai.chat.completions.create({
+            model: 'gpt-4-turbo',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              ...gptMessages,
+            ],
+            temperature: 0.7,
+            max_tokens: 2048,
+          });
+
+          if (!response.choices || !response.choices[0] || !response.choices[0].message) {
+            lastError = new Error('Invalid response format from OpenAI');
+            continue;
+          }
+
+          const text = response.choices[0].message.content;
+          return NextResponse.json({ content: text, model: 'chatgpt' });
+
+        } else if (currentModel === 'openrouter') {
           // Use OpenRouter
           if (!openRouterApiKey) {
             lastError = new Error("OpenRouter API Key is missing");

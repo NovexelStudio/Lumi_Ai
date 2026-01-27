@@ -40,6 +40,18 @@ interface Agent {
 
 const AGENTS: Agent[] = [
   {
+    id: 'chatgpt',
+    name: 'ChatGPT',
+    description: 'OpenAI\'s advanced reasoning engine with multimodal capabilities',
+    icon: <Sparkles />,
+    color: 'from-green-500 to-emerald-500',
+    capabilities: ['Advanced Reasoning', 'Code Analysis', 'Deep Thinking', 'Research'],
+    strength: 'Analytical',
+    temperature: 0.7,
+    version: '4.0',
+    isActive: true
+  },
+  {
     id: 'gemini',
     name: 'Gemini',
     description: 'Google\'s advanced multimodal AI with reasoning capabilities',
@@ -420,7 +432,7 @@ export default function ChatPage() {
         body: JSON.stringify({ 
           message: input, 
           agent: selectedAgent.id,
-          model: 'gemini',
+          model: selectedAgent.id === 'chatgpt' ? 'chatgpt' : 'gemini',
           history: messages 
         }),
       });
