@@ -15,16 +15,17 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [securityLevel, setSecurityLevel] = useState(0);
 
+  // 1. Handle redirection when user state changes
   useEffect(() => {
-    if (!loading && user) {
-      router.push('/');
+    if (user) {
+      router.replace('/');
     }
   }, [user, router]);
 
-  // Aesthetic progress bar
+  // 2. Aesthetic progress bar logic
   useEffect(() => {
     const interval = setInterval(() => {
-      setSecurityLevel(prev => prev >= 100 ? 0 : prev + 0.5);
+      setSecurityLevel(prev => (prev >= 100 ? 0 : prev + 0.5));
     }, 50);
     return () => clearInterval(interval);
   }, []);
@@ -34,20 +35,30 @@ export default function AuthPage() {
     setLoading(true);
     try {
       await signInWithGoogle();
-      // Note: For mobile, the page will redirect away here.
-      // For desktop, we manually push to home.
-      if (!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        router.push('/');
-      }
+      // NOTE: We don't push the router here. 
+      // The useEffect above handles the redirect once Firebase updates the user state.
     } catch (err: any) {
       console.error(err);
-      setError('Handshake failed. Ensure popups/redirects are allowed.');
+      if (err.code === 'auth/popup-blocked') {
+        setError('Handshake failed. Popup blocked by browser.');
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('Handshake aborted by user.');
+      } else {
+        setError('Credential sync failed. Terminal locked.');
+      }
       setLoading(false);
     }
   };
 
-  // Prevent flicker while checking auth state
-  if (authLoading && !loading) return null;
+  // 3. Fix: Instead of returning null (which breaks the logic), 
+  // we show a skeleton or just the background to keep the component mounted.
+  if (authLoading && !loading) {
+    return (
+      <div className="min-h-[100dvh] w-full flex items-center justify-center bg-[#020202]">
+        <div className="w-8 h-8 border-2 border-fuchsia-500/20 border-t-fuchsia-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] w-full flex items-center justify-center p-4 relative overflow-hidden bg-[#020202]">
@@ -58,8 +69,9 @@ export default function AuthPage() {
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
         className="relative z-20 w-full max-w-[450px] bg-black/40 backdrop-blur-3xl border border-white/[0.08] rounded-[2.5rem] overflow-hidden p-8 lg:p-12 shadow-2xl"
       >
         <div className="flex flex-col items-center text-center space-y-8">
@@ -109,10 +121,14 @@ export default function AuthPage() {
           </button>
 
           {error && (
-            <div className="flex items-center gap-2 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400 text-[10px] font-bold uppercase w-full justify-center">
+            <motion.div 
+              initial={{ x: -10 }} 
+              animate={{ x: 0 }}
+              className="flex items-center gap-2 p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400 text-[10px] font-bold uppercase w-full justify-center"
+            >
                 <ShieldAlert size={14} />
                 {error}
-            </div>
+            </motion.div>
           )}
 
           <p className="text-[9px] text-slate-600 uppercase tracking-widest leading-relaxed">

@@ -4,9 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
-    // This is a server-side endpoint that handles Google OAuth
-    // In a real implementation, you'd use the Google OAuth flow
-    // For now, return a client-side redirect that uses the GoogleAuthProvider
+  
     
     const html = `
       <!DOCTYPE html>
