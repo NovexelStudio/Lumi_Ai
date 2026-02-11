@@ -32,85 +32,70 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // 1. Capture the auth instance in a local constant.
-    // This 'locks' the type as 'Auth' so TypeScript stops complaining.
     const firebaseAuth = auth;
+    if (!firebaseAuth) {
+      setLoading(false);
+      return;
+    }
 
-    if (firebaseAuth) {
-      // 2. Set persistence
-      setPersistence(firebaseAuth, browserLocalPersistence).catch(err => 
-        console.error("LUMI_OS Persistence Error:", err)
-      );
+    // 1. Set persistence immediately
+    setPersistence(firebaseAuth, browserLocalPersistence).catch(console.error);
 
-      // 3. Handle the Mobile Redirect Result
-      const handleRedirect = async (activeAuth: Auth) => {
-        try {
-          const result = await getRedirectResult(activeAuth);
-          if (result?.user) {
-            setUser(result.user);
-            if (pathname === '/auth') {
-              router.replace('/');
-            }
-          }
-        } catch (error: any) {
-          console.error("LUMI_OS Redirect Handshake Error:", error.code);
+    // 2. The Redirect Handler (The Mobile Fix)
+    const initAuth = async (activeAuth: Auth) => {
+      try {
+        // Attempt to catch the user coming back from Google
+        const result = await getRedirectResult(activeAuth);
+        if (result?.user) {
+          setUser(result.user);
+          // FORCE REDIRECT
+          window.location.href = '/'; 
+          return;
         }
-      };
+      } catch (error: any) {
+        console.error("Redirect Error:", error.code);
+      }
 
-      handleRedirect(firebaseAuth);
-
-      // 4. Main Auth State Observer
-      const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
+      // 3. Auth State Observer
+      onAuthStateChanged(activeAuth, (currentUser) => {
         setUser(currentUser);
         if (currentUser && pathname === '/auth') {
           router.replace('/');
         }
         setLoading(false);
       });
+    };
 
-      return () => unsubscribe();
-    } else {
-      // If auth is undefined (during Vercel build), stop loading
-      setLoading(false);
-    }
+    initAuth(firebaseAuth);
   }, [router, pathname]);
 
   const signInWithGoogle = async () => {
-    // Re-capture locally for the async function
     const firebaseAuth = auth;
-    if (!firebaseAuth) {
-      console.error("Authentication system not initialized.");
-      return;
-    }
+    if (!firebaseAuth) return;
 
     const provider = new GoogleAuthProvider();
+    // Force account selection to prevent "auto-logging" into the wrong account
     provider.setCustomParameters({ prompt: 'select_account' });
 
     try {
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
-        // Mobile redirect to bypass popup blockers
+        // Redirect is safer for mobile browsers
         await signInWithRedirect(firebaseAuth, provider);
       } else {
-        // Desktop popup for better UX
         await signInWithPopup(firebaseAuth, provider);
       }
     } catch (error: any) {
-      console.error("LUMI_OS Auth Error:", error.code);
+      console.error("Login Error:", error.code);
       throw error;
     }
   };
 
   const logout = async () => {
-    const firebaseAuth = auth;
-    if (firebaseAuth) {
-      try {
-        await signOut(firebaseAuth);
-        setUser(null);
-        router.push('/auth');
-      } catch (error) {
-        console.error("Logout error:", error);
-      }
+    if (auth) {
+      await signOut(auth);
+      setUser(null);
+      router.push('/auth');
     }
   };
 
@@ -123,8 +108,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
