@@ -10,10 +10,8 @@ import {
   getRedirectResult,
   GoogleAuthProvider,
   UserCredential,
-  Auth,
-  setPersistence,
   browserLocalPersistence,
-  browserSessionPersistence
+  setPersistence
 } from 'firebase/auth';
 import { auth } from './firebase';
 
@@ -21,8 +19,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   logout: () => Promise<void>;
-  signInWithGoogle: () => Promise<UserCredential | void>;
-  auth: Auth | null;
+  signInWithGoogle: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,87 +27,57 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [authInstance] = useState<Auth | null>(auth);
 
   useEffect(() => {
-    if (!authInstance) {
+    // 1. Set persistence
+    setPersistence(auth, browserLocalPersistence);
+
+    // 2. Catch the result of a redirect (Crucial for Mobile)
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result) setUser(result.user);
+      })
+      .catch((error) => console.error("Redirect Error:", error));
+
+    // 3. Listen for auth state
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
       setLoading(false);
-      return;
-    }
-
-    // Set persistence for better handling
-    setPersistence(authInstance, browserLocalPersistence).catch(console.error);
-
-    // Listen for auth state changes with error handling
-    const unsubscribe = onAuthStateChanged(
-      authInstance,
-      (currentUser) => {
-        setUser(currentUser);
-        setLoading(false);
-      },
-      (error) => {
-        console.error('Auth state change error:', error);
-        setLoading(false);
-      }
-    );
-
-    // Handle redirect result for mobile
-    getRedirectResult(authInstance).catch((error) => {
-      console.error("Redirect auth error:", error);
     });
 
     return () => unsubscribe();
-  }, [authInstance]);
-
-  const logout = async () => {
-    try {
-      if (authInstance) {
-        await signOut(authInstance);
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
+  }, []);
 
   const signInWithGoogle = async () => {
-    if (!authInstance) return;
-    
     const provider = new GoogleAuthProvider();
-    provider.addScope('profile');
-    provider.addScope('email');
-    
-    // Enhanced error handling
+    provider.setCustomParameters({ prompt: 'select_account' });
+
     try {
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
       if (isMobile) {
-        return await signInWithRedirect(authInstance, provider);
+        // Mobile browsers block popups; use redirect
+        await signInWithRedirect(auth, provider);
       } else {
-        return await signInWithPopup(authInstance, provider);
+        // Desktop uses popup
+        await signInWithPopup(auth, provider);
       }
     } catch (error: any) {
-      console.error('Sign in error:', error.code, error.message);
+      console.error("LUMI_OS AUTH_ERROR:", error.code);
       throw error;
     }
   };
 
+  const logout = () => signOut(auth);
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      logout, 
-      signInWithGoogle,
-      auth: authInstance 
-    }}>
+    <AuthContext.Provider value={{ user, loading, logout, signInWithGoogle }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
-}
+};
