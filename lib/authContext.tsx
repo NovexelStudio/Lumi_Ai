@@ -9,11 +9,12 @@ import {
   signInWithRedirect, 
   getRedirectResult,
   GoogleAuthProvider,
-  UserCredential,
   browserLocalPersistence,
-  setPersistence
+  setPersistence,
+  Auth
 } from 'firebase/auth';
 import { auth } from './firebase';
+import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -27,58 +28,89 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    // Safety check: If auth didn't initialize, stop the crash
-    if (!auth) {
-      console.warn("LUMI_OS: Auth not initialized. Check environment variables.");
+    // Narrow the type: Only run logic if auth is initialized (Client-side)
+    if (auth) {
+      // 1. Set persistence to keep user logged in across refreshes
+      setPersistence(auth, browserLocalPersistence).catch(err => 
+        console.error("LUMI_OS Persistence Error:", err)
+      );
+
+      // 2. Handle the Result after a Mobile Redirect
+      const handleRedirectResult = async () => {
+        try {
+          const result = await getRedirectResult(auth);
+          if (result?.user) {
+            setUser(result.user);
+            // If they are on the auth page, send them home
+            if (pathname === '/auth') {
+              router.replace('/');
+            }
+          }
+        } catch (error: any) {
+          console.error("LUMI_OS Redirect Error:", error.code);
+        }
+      };
+
+      handleRedirectResult();
+
+      // 3. Listen for Authentication State changes
+      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        
+        // Auto-redirect if user is already authenticated
+        if (currentUser && pathname === '/auth') {
+          router.replace('/');
+        }
+        
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
+    } else {
+      // If auth is undefined (Server-side/Build-time), stop loading state
       setLoading(false);
-      return;
     }
-
-    // 1. Set persistence
-    setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence Error:", err));
-
-    // 2. Catch the result of a redirect (Crucial for Mobile)
-    getRedirectResult(auth)
-      .then((result) => {
-        if (result) setUser(result.user);
-      })
-      .catch((error) => console.error("Redirect Error:", error));
-
-    // 3. Listen for auth state
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  }, [router, pathname]);
 
   const signInWithGoogle = async () => {
-    // Guard against null auth
+    // Guard clause for TypeScript and Runtime safety
     if (!auth) {
-      throw new Error("auth/initialization-failed: Check your Firebase API Key.");
+      console.error("Authentication system not initialized.");
+      return;
     }
 
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
 
     try {
+      // Detect mobile device to switch from Popup to Redirect
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
       if (isMobile) {
         await signInWithRedirect(auth, provider);
       } else {
         await signInWithPopup(auth, provider);
       }
     } catch (error: any) {
-      console.error("LUMI_OS AUTH_ERROR:", error.code);
+      console.error("LUMI_OS Auth Error:", error.code, error.message);
       throw error;
     }
   };
 
   const logout = async () => {
-    if (auth) await signOut(auth);
+    if (auth) {
+      try {
+        await signOut(auth);
+        setUser(null);
+        router.push('/auth');
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    }
   };
 
   return (
@@ -90,6 +122,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
   return context;
 };
