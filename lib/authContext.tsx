@@ -1,14 +1,23 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signOut, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { 
+  User, 
+  onAuthStateChanged, 
+  signOut, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult,
+  GoogleAuthProvider,
+  UserCredential
+} from 'firebase/auth';
 import { auth } from './firebase';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   logout: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<UserCredential | void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,39 +25,25 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    if (!auth) return;
+
+    // 1. Listen for auth state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+
+    // 2. Critical for Mobile: Handle the result after the page redirects back
+    getRedirectResult(auth).catch((error) => {
+      console.error("Mobile Redirect Auth Error:", error);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (!mounted) return;
-
-    if (!auth) {
-      console.warn('Firebase auth not initialized');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        setUser(currentUser);
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } catch (error) {
-      console.error('Auth initialization error:', error);
-      setLoading(false);
-    }
-  }, [mounted]);
-
   const logout = async () => {
-    if (!auth) {
-      console.warn('Firebase auth not initialized');
-      return;
-    }
     try {
       await signOut(auth);
     } catch (error) {
@@ -57,15 +52,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    if (!auth) {
-      console.warn('Firebase auth not initialized');
-      return;
-    }
+    if (!auth) return;
+    const provider = new GoogleAuthProvider();
+    
+    // Detect mobile browser
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      if (isMobile) {
+        // Mobile: Redirect happens in the same tab
+        return await signInWithRedirect(auth, provider);
+      } else {
+        // Desktop: Standard popup
+        return await signInWithPopup(auth, provider);
+      }
     } catch (error: any) {
-      console.error('Google sign in error:', error);
+      console.error('Sign in error:', error);
       throw error;
     }
   };

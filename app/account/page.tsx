@@ -143,9 +143,9 @@ export default function AccountPage() {
                   <div className="relative w-14 sm:w-16 h-14 sm:h-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-white/10 to-transparent p-[2px]">
                     <div className="w-full h-full rounded-xl sm:rounded-2xl bg-[#020202] flex items-center justify-center overflow-hidden">
                       <img 
-                        src="/boy.png" 
+                        src="/boy.png"
                         alt="Profile" 
-                        className="w-full h-full object-cover rounded-xl sm:rounded-2xl" 
+                        className="w-full h-full object-cover rounded-xl sm:rounded-2xl bg-amber-50" 
                       />
                     </div>
                   </div>
