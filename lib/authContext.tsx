@@ -32,53 +32,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Narrow the type: Only run logic if auth is initialized (Client-side)
-    if (auth) {
-      // 1. Set persistence to keep user logged in across refreshes
-      setPersistence(auth, browserLocalPersistence).catch(err => 
+    // 1. Capture the auth instance in a local constant.
+    // This 'locks' the type as 'Auth' so TypeScript stops complaining.
+    const firebaseAuth = auth;
+
+    if (firebaseAuth) {
+      // 2. Set persistence
+      setPersistence(firebaseAuth, browserLocalPersistence).catch(err => 
         console.error("LUMI_OS Persistence Error:", err)
       );
 
-      // 2. Handle the Result after a Mobile Redirect
-      const handleRedirectResult = async () => {
+      // 3. Handle the Mobile Redirect Result
+      const handleRedirect = async (activeAuth: Auth) => {
         try {
-          const result = await getRedirectResult(auth);
+          const result = await getRedirectResult(activeAuth);
           if (result?.user) {
             setUser(result.user);
-            // If they are on the auth page, send them home
             if (pathname === '/auth') {
               router.replace('/');
             }
           }
         } catch (error: any) {
-          console.error("LUMI_OS Redirect Error:", error.code);
+          console.error("LUMI_OS Redirect Handshake Error:", error.code);
         }
       };
 
-      handleRedirectResult();
+      handleRedirect(firebaseAuth);
 
-      // 3. Listen for Authentication State changes
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      // 4. Main Auth State Observer
+      const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
         setUser(currentUser);
-        
-        // Auto-redirect if user is already authenticated
         if (currentUser && pathname === '/auth') {
           router.replace('/');
         }
-        
         setLoading(false);
       });
 
       return () => unsubscribe();
     } else {
-      // If auth is undefined (Server-side/Build-time), stop loading state
+      // If auth is undefined (during Vercel build), stop loading
       setLoading(false);
     }
   }, [router, pathname]);
 
   const signInWithGoogle = async () => {
-    // Guard clause for TypeScript and Runtime safety
-    if (!auth) {
+    // Re-capture locally for the async function
+    const firebaseAuth = auth;
+    if (!firebaseAuth) {
       console.error("Authentication system not initialized.");
       return;
     }
@@ -87,24 +87,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     provider.setCustomParameters({ prompt: 'select_account' });
 
     try {
-      // Detect mobile device to switch from Popup to Redirect
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      
       if (isMobile) {
-        await signInWithRedirect(auth, provider);
+        // Mobile redirect to bypass popup blockers
+        await signInWithRedirect(firebaseAuth, provider);
       } else {
-        await signInWithPopup(auth, provider);
+        // Desktop popup for better UX
+        await signInWithPopup(firebaseAuth, provider);
       }
     } catch (error: any) {
-      console.error("LUMI_OS Auth Error:", error.code, error.message);
+      console.error("LUMI_OS Auth Error:", error.code);
       throw error;
     }
   };
 
   const logout = async () => {
-    if (auth) {
+    const firebaseAuth = auth;
+    if (firebaseAuth) {
       try {
-        await signOut(auth);
+        await signOut(firebaseAuth);
         setUser(null);
         router.push('/auth');
       } catch (error) {
