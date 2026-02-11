@@ -29,8 +29,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Safety check: If auth didn't initialize, stop the crash
+    if (!auth) {
+      console.warn("LUMI_OS: Auth not initialized. Check environment variables.");
+      setLoading(false);
+      return;
+    }
+
     // 1. Set persistence
-    setPersistence(auth, browserLocalPersistence);
+    setPersistence(auth, browserLocalPersistence).catch(err => console.error("Persistence Error:", err));
 
     // 2. Catch the result of a redirect (Crucial for Mobile)
     getRedirectResult(auth)
@@ -49,16 +56,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signInWithGoogle = async () => {
+    // Guard against null auth
+    if (!auth) {
+      throw new Error("auth/initialization-failed: Check your Firebase API Key.");
+    }
+
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
 
     try {
       const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       if (isMobile) {
-        // Mobile browsers block popups; use redirect
         await signInWithRedirect(auth, provider);
       } else {
-        // Desktop uses popup
         await signInWithPopup(auth, provider);
       }
     } catch (error: any) {
@@ -67,7 +77,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => signOut(auth);
+  const logout = async () => {
+    if (auth) await signOut(auth);
+  };
 
   return (
     <AuthContext.Provider value={{ user, loading, logout, signInWithGoogle }}>
