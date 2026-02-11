@@ -15,9 +15,8 @@ export default function AuthPage() {
   const [error, setError] = useState('');
   const [securityLevel, setSecurityLevel] = useState(0);
 
-  // Redirect if user is detected
   useEffect(() => {
-    if (user) {
+    if (!loading && user) {
       router.push('/');
     }
   }, [user, router]);
