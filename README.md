@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://iili.io/qJ8GGYg.png?font=Fira+Code&size=34&duration=3000&pause=1000&color=FFFFFF&center=true&vCenter=true&width=800&lines=✧+LUMI_AI+✧;The+Ultimate+AI+Nexus;Gemini+•+Groq+•+ChatGPT" alt="Lumi_AI Banner" />
+<img src="https://iili.io/qJ8GGYg.png" />
 
 <br/>
 
