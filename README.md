@@ -4,7 +4,7 @@
 
 <br/>
 
-<img src="https://komarev.com/ghpvc/?username=yourusername&color=blue" />
+<img src="https://komarev.com/ghpvc/?username=NovexelStudio&color=blue" />
 
 </div>
 
@@ -32,10 +32,10 @@ AI-powered chat platform built with:
 
 ## 🚀 Live Demo
 
-https://your-live-site.com
+https://lumi-ai.vercel.app/
 
 ---
 
 ## 📦 Repository
 
-https://github.com/yourusername/lumi_ai
+https://github.com/NovexelStudio/Lumi_Ai
