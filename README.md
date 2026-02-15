@@ -66,17 +66,6 @@ https://lumi-ai.vercel.app/
 
 [![View Repo](https://img.shields.io/badge/View-Repository-black?style=for-the-badge&logo=github)](https://github.com/NovexelStudio/Lumi_Ai)
 
-
----
-
-## 📊 GitHub Stats
-
-![GitHub Stats](https://github-readme-stats.vercel.app/api?username=NovexelStudio&show_icons=true&theme=tokyonight)
-
-![Top Languages](https://github-readme-stats.vercel.app/api/top-langs/?username=NovexelStudio&layout=compact&theme=tokyonight)
-
----
-
 ## 📬 Contact
 
 - GitHub: https://github.com/NovexelStudio
